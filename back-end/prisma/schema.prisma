@@ -5,11 +5,12 @@
 
 generator client {
   provider = "prisma-client-js"
+  output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
-  // URL connection is configured in prisma.config.ts for Prisma 7+
+  
 }
 
 // 🔑 1.1 ENUM UNTUK ROLE-BASED ACCESS CONTROL (RBAC)
