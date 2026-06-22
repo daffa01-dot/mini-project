@@ -1,43 +1,53 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
-  
 }
 
-// 🔑 1.1 ENUM UNTUK ROLE-BASED ACCESS CONTROL (RBAC)
+// 🔐 ENUM UNTUK ROLE PENGGUNA
 enum Role {
-  ADMIN     // Pihak Pengelola / Shelter
-  DONATUR   // Pihak Orang Tua Asuh / Donatur
+  SUPER_ADMIN
+  SHELTER
+  DONATUR
 }
 
-// 💸 ENUM UNTUK TRANSAKSI FLUX STATUS (ALUR TRANSFER MANUAL)
+// 🏡 ENUM UNTUK STATUS VERIFIKASI SHELTER
+enum ShelterVerificationStatus {
+  PENDING   // Baru daftar, menunggu verifikasi super admin
+  APPROVED  // Lolos verifikasi, tampil di dashboard publik
+  REJECTED  // Tidak lolos verifikasi
+}
+
+// 💸 ENUM UNTUK TRANSAKSI DONASI STATUS (ALUR TRANSFER MANUAL)
 enum DonationStatus {
-  PENDING   // Bukti transfer baru diunggah, menunggu verifikasi manual admin
+  PENDING   // Bukti transfer baru diunggah, menunggu verifikasi manual shelter atau super admin
   APPROVED  // Bukti transfer sah, dana masuk, status slot terpotong
   REJECTED  // Bukti transfer palsu atau tidak sesuai
 }
 
 // 🏷️ 1. TABEL UTAMA: USER (AUTENTIKASI & OTORISASI)
 model User {
-  id              String    @id @default(uuid())
-  email           String    @unique
-  password        String    // Kata sandi wajib di-hash dengan bcrypt pada backend
-  role            Role      @default(DONATUR)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  deletedAt       DateTime? // 🛡️ IMPLEMENTASI SOFT DELETE (Requirement 1.2)
+  id                String    @id @default(uuid())
+  email             String    @unique
+  password          String    // Kata sandi wajib di-hash dengan bcrypt pada backend
+  role              Role      @default(DONATUR)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime? // 🛡️ IMPLEMENTASI SOFT DELETE
 
-  // Relasi 1-to-1: Satu User memiliki satu profil Donatur
-  donaturProfile  Donatur?
+  // Relasi 1-to-1: Satu User memiliki satu profil Donatur (jika role DONATUR)
+  donaturProfile    Donatur?
+
+  // Relasi 1-to-1: Satu User memiliki satu profil Shelter (jika role SHELTER)
+  shelterProfile    Shelter?
+
+  // 🛡️ AUDIT TRAIL: Relasi untuk mencatat transaksi apa saja yang diverifikasi oleh User ini (Super Admin / Shelter)
+  verifiedDonations Donasi[]  @relation("TransactionVerifier")
 }
 
 // 👤 2. TABEL PROFIL DONATUR
@@ -50,43 +60,47 @@ model Donatur {
   address     String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  deletedAt   DateTime? // 🛡️ IMPLEMENTASI SOFT DELETE (Requirement 1.2)
+  deletedAt   DateTime? // 🛡️ IMPLEMENTASI SOFT DELETE
 
   // Relasi 1-to-Many
   donations   Donasi[]
   adoptions   AdoptionPeriod[]
-  
+
   // Relasi Many-to-Many via Junction Tables
   comments    Comment[]
   wishlists   Wishlist[]
 }
 
-// 🏡 3. TABEL MITRA SHELTER (PANTI FISIK PENGELOLA HEWAN)
+// 🏡 3. TABEL PROFIL SHELTER (DIDAFTARKAN MANDIRI OLEH MITRA SHELTER)
 model Shelter {
-  id          String    @id @default(uuid())
-  name        String   
-  city        String    // Digunakan untuk parameter filter pencarian backend
-  address     String
-  contactNo   String    // Nomor WhatsApp pengelola panti
-  bankAccount String    // Informasi rekening resmi shelter (Nama Bank, No Rek, AN)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  deletedAt   DateTime? // 🛡️ IMPLEMENTASI SOFT DELETE (Requirement 1.2)
+  id                  String                    @id @default(uuid())
+  userId              String                    @unique
+  user                User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name                String
+  description         String                    @db.Text // Ditampilkan di halaman detail shelter
+  city                String                    // Digunakan untuk parameter filter pencarian backend
+  address             String
+  contactNo           String                    // Nomor WhatsApp pengelola panti
+  bankAccount         String                    // Informasi rekening resmi shelter (Nama Bank, No Rek, AN)
+  verificationStatus  ShelterVerificationStatus @default(PENDING) // Gate tampil di dashboard publik
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
+  deletedAt           DateTime?                 // 🛡️ IMPLEMENTASI SOFT DELETE
 
   // Relasi 1-to-Many: Satu shelter dapat mengasuh banyak hewan telantar
-  animals     Hewan[]
+  animals             Hewan[]
 }
 
 // 🐱 4. TABEL KATALOG HEWAN TELANTAR (BIAYA PECAHAN & MULTI-SLOT)
 model Hewan {
   id             String    @id @default(uuid())
-  shelterId      String   
+  shelterId      String
   shelter        Shelter   @relation(fields: [shelterId], references: [id], onDelete: Cascade)
   name           String
   type           String    // Berisi teks "KUCING" atau "ANJING" untuk filter backend
   description    String    @db.Text
-  
-  // 💰 PECAH BIAYA RIIL & MANAJEMEN SLOT (Inovasi Solusi Dosen)
+
+  // 💰 PECAH BIAYA RIIL & MANAJEMEN SLOT
   foodCost       Float     // Biaya pakan bulanan (misal: 100000)
   medicalCost    Float     // Biaya obat bulanan (misal: 50000)
   slotsAvailable Int       @default(3) // Standar awal: 3 slot patungan per hewan
@@ -95,7 +109,7 @@ model Hewan {
   status         String    @default("BUTUH_ASUHAN") // "BUTUH_ASUHAN" atau "SUDAH_DIADOPSI"
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
-  deletedAt      DateTime? // 🛡️ IMPLEMENTASI SOFT DELETE (Requirement 1.2)
+  deletedAt      DateTime? // 🛡️ IMPLEMENTASI SOFT DELETE
 
   // Relasi balik untuk entitas transaksi dan interaksi
   donations      Donasi[]
@@ -111,7 +125,7 @@ model AdoptionPeriod {
   donatur    Donatur  @relation(fields: [donaturId], references: [id], onDelete: Cascade)
   hewanId    String
   hewan      Hewan    @relation(fields: [hewanId], references: [id], onDelete: Cascade)
-  startDate  DateTime @default(now()) 
+  startDate  DateTime @default(now())
   endDate    DateTime // Waktu kadaluarsa dihitung dinamis sesuai nominal transfer
   isActive   Boolean  @default(true)  // Status keaktifan donasi slot berjalan
   createdAt  DateTime @default(now())
@@ -120,54 +134,63 @@ model AdoptionPeriod {
 
 // 📊 6. TABEL RIWAYAT TRANSAKSI DONASI (LOGIKA UTAMA TRANSAKSI SQL & POTONGAN 10%)
 model Donasi {
-  id          String         @id @default(uuid())
-  donaturId   String
-  donatur     Donatur        @relation(fields: [donaturId], references: [id], onDelete: Cascade)
-  hewanId     String
-  hewan       Hewan          @relation(fields: [hewanId], references: [id], onDelete: Cascade)
-  amount      Float          // Jumlah uang penuh yang ditransfer donatur
-  proofUrl    String         // Bukti transfer manual (file di Cloud Storage)
-  status      DonationStatus @default(PENDING)
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  id           String         @id @default(uuid())
+  donaturId    String
+  donatur      Donatur        @relation(fields: [donaturId], references: [id], onDelete: Cascade)
+  hewanId      String
+  hewan        Hewan          @relation(fields: [hewanId], references: [id], onDelete: Cascade)
+  
+  // 💸 MANAJEMEN NOMINAL & POTONGAN PLATFORM
+  amount       Float          // Jumlah uang penuh yang ditransfer donatur (Gross Amount)
+  platformFee  Float          // Potongan platform 10% (Disimpan permanen untuk riwayat laporan keuangan)
+  netAmount    Float          // Jumlah bersih yang diteruskan ke shelter (amount - platformFee)
+  
+  proofUrl     String         // Bukti transfer manual (file di Cloud Storage)
+  status       DonationStatus @default(PENDING)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  // 🛡️ AUDIT TRAIL VERIFIKATOR (Mencatat akun Super Admin / Shelter yang melakukan ACC/REJECT)
+  verifiedById String?        
+  verifiedBy   User?          @relation("TransactionVerifier", fields: [verifiedById], references: [id])
 }
 
 // 📰 7. TABEL LAPORAN PERKEMBANGAN (TRANSPARANSI PROOF-OF-IMPACT)
 model Report {
-  id        String   @id @default(uuid())
-  hewanId   String
-  hewan     Hewan    @relation(fields: [hewanId], references: [id], onDelete: Cascade)
-  title     String   // Judul kabar terbaru (misal: "Kabar Milo Minggu Ke-2")
-  content   String   @db.Text // Teks perkembangan fisik hewan
-  photoUrl  String?  // Foto pendukung kondisi hewan terbaru dari Cloud Storage
+  id         String   @id @default(uuid())
+  hewanId    String
+  hewan      Hewan    @relation(fields: [hewanId], references: [id], onDelete: Cascade)
+  title      String   // Judul kabar terbaru (misal: "Kabar Milo Minggu Ke-2")
+  content    String   @db.Text // Teks perkembangan fisik hewan
+  photoUrl   String?  // Foto pendukung kondisi hewan terbaru dari Cloud Storage
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   // Relasi Many-to-Many ke Donatur via Junction Table Comment
   comments  Comment[]
 }
 
 // 🔀 8. JUNCTION TABLE 1: COMMENT (Many-to-Many antara Donatur & Report)
 model Comment {
-  id        String   @id @default(uuid())
-  reportId  String
-  report    Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
-  donaturId String
-  donatur   Donatur  @relation(fields: [donaturId], references: [id], onDelete: Cascade)
-  text      String   @db.Text
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(uuid())
+  reportId   String
+  report     Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  donaturId  String
+  donatur    Donatur  @relation(fields: [donaturId], references: [id], onDelete: Cascade)
+  text       String   @db.Text
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 // 🔀 9. JUNCTION TABLE 2: WISHLIST (Many-to-Many antara Donatur & Hewan)
 model Wishlist {
-  id        String   @id @default(uuid())
-  donaturId String
-  donatur   Donatur  @relation(fields: [donaturId], references: [id], onDelete: Cascade)
-  hewanId   String
-  hewan     Hewan    @relation(fields: [hewanId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+  id         String   @id @default(uuid())
+  donaturId  String
+  donatur    Donatur  @relation(fields: [donaturId], references: [id], onDelete: Cascade)
+  hewanId    String
+  hewan      Hewan    @relation(fields: [hewanId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
 
   // Constraint penting: Donatur dilarang menandai satu hewan yang sama berkali-kali ke wishlist
-  @@unique([donaturId, hewanId]) 
+  @@unique([donaturId, hewanId])
 }
