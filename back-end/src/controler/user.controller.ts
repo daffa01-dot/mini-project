@@ -1,11 +1,8 @@
 import { Request, Response } from "express";
 import { userService } from "../services/user.services";
 import { StatusCodes } from "http-status-codes";
-import { UserController } from "./user.controller";
 
-export const authcontroller = {
-  async login(req: Request, res: Response) {},
-
+export class UserController {
   async register(req: Request, res: Response) {
     try {
       const { email, password, role, fullName, phoneNumber } = req?.body;
@@ -30,6 +27,31 @@ export const authcontroller = {
         data: null,
       });
     }
-  },
-};
+  }
+
+  async login(req: Request, res: Response) {
+    try {
+      const email = req.body?.email || req.body?.usernameOrEmail;
+      const password = req.body?.password;
+
+      const userLogin = await userService.login({
+        usernameOrEmail: email,
+        password: password,
+      });
+
+      return res.status(StatusCodes.OK).json({
+        success: true,
+        message: "Login successfully",
+        data: userLogin,
+      });
+    } catch (error: any) {
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: error?.message || "Failed to login",
+        data: null,
+      });
+    }
+  }
+}
+
 export default new UserController();
