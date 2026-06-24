@@ -3,6 +3,8 @@ import { StatusCodes } from 'http-status-codes';
 import 'dotenv/config';
 import AuthRouter from './Router/AuthRouter';
 
+import userRoutes from './Router/donatur.routes';
+
 const PORT: number = parseInt(process.env.PORT!) || 8001;
 const API_PREFIX = '/api/v1';
 const WHITE_LIST = 'http://localhost:5173,http://localhost:3000';
@@ -23,8 +25,13 @@ const app = express();
 // app.use(cors(corsOptions));
 
 app.use(express.json());
-app.use(`${API_PREFIX}/auth`, AuthRouter);
-// app.use(`${API_PREFIX}/articles`, ArticlesRouter);
+
+app.use(`${API_PREFIX}/auth`, userRoutes);
+
+app.get('/ping', (_: Request, res: Response) => {
+  res.status(StatusCodes.OK).json({ message: 'pong' });
+});
+
 
 app.use((err: any, _: Request, res: Response, __: NextFunction) => {
   res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -34,10 +41,15 @@ app.use((err: any, _: Request, res: Response, __: NextFunction) => {
   });
 });
 
-if (process.env.NODE_ENV === 'development') {
+// if (process.env.NODE_ENV === 'development') {
   app.listen(PORT, () => {
     console.log(`[⚡APP] Application is running on port: ${PORT}`);
   });
-}
+// }
+
+app.get('/test-koneksi', (_: Request, res: Response) => {
+  res.send("Postman sukses terhubung ke server!");
+});
+
 
 export default app;

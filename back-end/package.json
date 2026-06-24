@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon src/app.ts",
+    "dev": "npx nodemon src/app.ts",
     "build": "tsc && prisma generate",
     "postinstall": "prisma generate"
   },
@@ -15,17 +15,21 @@
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.6",
-    "@types/node": "^25.9.3",
-    "nodemon": "^3.1.14",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^25.9.4",
+    "@types/pg": "^8.20.0",
     "prisma": "^7.8.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "bcrypt": "^6.0.0",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.22.0"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
