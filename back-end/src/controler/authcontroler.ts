@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import { userService } from "../services/user.services";
+import { userService } from "../services/donatur.services";
 import { StatusCodes } from "http-status-codes";
-import { UserController } from "./user.controller";
+import { UserController } from "./donatur.controler";
 
 export const authcontroller = {
   async login(req: Request, res: Response) {},
