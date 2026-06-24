@@ -3,12 +3,10 @@ import { userService } from "../services/donatur.services";
 import { StatusCodes } from "http-status-codes";
 import { prisma } from "../configs/prisma.-client-config";
 
-
 export class UserController {
- async register(req: Request, res: Response) {
+  async register(req: Request, res: Response) {
     try {
       // DEBUG LOG: Untuk memastikan data benar-benar dibaca oleh Express
-     
 
       // Ambil data dengan aman dari req.body (mengantisipasi typo huruf besar/kecil dari client)
       const email = req.body?.email;
@@ -20,25 +18,25 @@ export class UserController {
 
       // Teruskan objek payload utuh ke Service
       // Cast to any to allow passing additional profile fields (e.g., address)
-      const createdUser = await userService.register({ 
-        email, 
-        password, 
-        role, 
-        fullName, 
+      const createdUser = await userService.register({
+        email,
+        password,
+        role,
+        fullName,
         phoneNumber,
-        address
+        address,
       } as any);
 
       return res.status(StatusCodes.CREATED).json({
-        success: true, 
-        message: 'User and profile registered successfully', 
-        data: createdUser
+        success: true,
+        message: "User and profile registered successfully",
+        data: createdUser,
       });
     } catch (error: any) {
       return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: error?.message || 'Failed to register user',
-        data: null
+        message: error?.message || "Failed to register user",
+        data: null,
       });
     }
   }
