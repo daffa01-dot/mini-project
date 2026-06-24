@@ -3,7 +3,7 @@ import { StatusCodes } from 'http-status-codes';
 import 'dotenv/config';
 import AuthRouter from './Router/AuthRouter';
 
-import userRoutes from './Router/userRoutes';
+import userRoutes from './Router/donatur.routes';
 
 const PORT: number = parseInt(process.env.PORT!) || 8001;
 const API_PREFIX = '/api/v1';
