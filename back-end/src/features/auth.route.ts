@@ -7,8 +7,10 @@ const authRouter = Router();
 authRouter.post('/register-donatur', AuthController.register_user);
 authRouter.post('/login-donatur', AuthController.loginUser);
 
+
+
 // Alur Autentikasi Per Role (Admin & Shelter)
-authRouter.post('/register-role', AuthController.registerEmployee);
-authRouter.post('/login-role', AuthController.loginEmployee);
+authRouter.post('/register-role', AuthController.register_user); 
+authRouter.post('/login-role', AuthController.loginShelter);
 
 export default authRouter;

@@ -1,13 +1,15 @@
 import { PrismaClient, Role } from '@prisma/client'
-import { BcryptUtil } from '../utils/bycrypt';
-import {JWTUtil  } from '../utils/jwt'
+import bcrypt from 'bcrypt' // Perbaikan import bcrypt
+import { JWTUtil } from '../utils/jwt'
 import { ResponseError } from '../utils/response-error.util'
 import { StatusCodes } from 'http-status-codes'
 import {
   AuthLoginInput,
   AuthRegisterInput,
 } from './auth.validation';
+
 const prisma = new PrismaClient()
+const SALT_ROUNDS = 10; // Dibutuhkan untuk bcrypt.hash
 
 export class AuthService {
   // ============================================================
@@ -26,32 +28,33 @@ export class AuthService {
       throw new ResponseError(StatusCodes.CONFLICT, 'Email already registered')
     }
 
-    const hashed = await bcrypt.hashPassword(password)
+    // Perbaikan cara hashing bcrypt standar
+    const hashed = await bcrypt.hash(password, SALT_ROUNDS)
 
     // ── DONATUR ──────────────────────────────────────────────
     if (role === Role.DONATUR) {
-      const user = await prisma.user.create({
-        data: {
-          email,
-          password: hashed,
-          namaLengkap,
-          noWhatsapp,
-          role: Role.DONATUR
-        }
-      })
+     const user = await prisma.user.create({
+  data: {
+    email,
+    password: hashed,
+    namaLengkap,
+    noWhatsapp: noWhatsapp ?? null, // <-- Ubah bagian ini
+    role: Role.DONATUR
+  }
+})
 
       const { password: _, ...safeUser } = user
       return safeUser
     }
 
     // ── ADMIN ─────────────────────────────────────────────────
-    if (role === Role.ADMIN) {
+    if (role === Role.SUPER_ADMIN) {
       const user = await prisma.user.create({
         data: {
           email,
           password: hashed,
           namaLengkap,
-          role: Role.ADMIN
+          role: Role.SUPER_ADMIN
         }
       })
 
@@ -67,7 +70,7 @@ export class AuthService {
             email,
             password: hashed,
             namaLengkap,
-            noWhatsapp,
+            noWhatsapp: noWhatsapp ?? null,
             role: Role.SHELTER
           }
         })
@@ -112,18 +115,18 @@ export class AuthService {
       throw new ResponseError(StatusCodes.UNAUTHORIZED, 'Email or password is incorrect')
     }
 
-    // Cek password
-    const isValid = await comparePassword(password, user.password)
+    // Perbaikan: gunakan bcrypt.compare secara langsung
+    const isValid = await bcrypt.compare(password, user.password)
     if (!isValid) {
       throw new ResponseError(StatusCodes.UNAUTHORIZED, 'Email or password is incorrect')
     }
 
-    // Generate token
-    const token = generateToken({
-      id: user.id,
-      email: user.email,
-      role: user.role
-    })
+    // Perbaikan: Panggil method statis dari JWTUtil (asumsi nama methodnya generateToken atau sign)
+   const token = JWTUtil.signToken({
+  id: user.id,
+  email: user.email,
+  role: user.role
+})
 
     const { password: _, ...safeUser } = user
     return { safeUser, token }

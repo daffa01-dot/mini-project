@@ -16,11 +16,11 @@ export class AuthController {
   }
   // LOGIN ADMIN & SHELTER
   static async loginShelter(req: Request, res: Response) {
-    const { body } = validate(AuthValidation.LOGIN_SHELTER, {
+    const { body } = validate(AuthValidation.LOGIN_USER, {
       body: req.body
     }) as { body: typeof req.body }
 
-    const { safeUser, token } = await AuthService.loginEmployee({ body })
+    const { safeUser, token } = await AuthService.login({ body })
 
     res.cookie(
       'token',
@@ -46,7 +46,7 @@ export class AuthController {
       body: req.body
     })
 
-    const safeUser = await AuthService.registerEmployee({ body })
+    const safeUser = await AuthService.register({ body })
 
     res.status(StatusCodes.CREATED).json({
       success: true,

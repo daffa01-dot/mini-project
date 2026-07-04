@@ -5,7 +5,7 @@ export class AuthValidation {
   // ============================================================
   // REGISTER — 1 schema untuk semua role
   // ============================================================
-  static readonly REGISTER = zod.object({
+  static readonly REGISTER_USER = zod.object({
     body: zod.object({
       email: zod
         .string()
@@ -30,10 +30,9 @@ export class AuthValidation {
         .regex(/^[0-9]+$/, 'WhatsApp number must be numeric')
         .optional(),
 
-      role: zod.enum([Role.ADMIN, Role.SHELTER, Role.DONATUR], {
-        required_error: 'Role is required',
-        invalid_type_error: 'Role must be ADMIN, SHELTER, or DONATUR'
-      }),
+      role: zod
+        .enum([Role.SUPER_ADMIN, Role.SHELTER, Role.DONATUR])
+        .describe('Role must be SUPER_ADMIN, SHELTER, or DONATUR'),
 
       // Data Shelter — opsional, wajib kalau role SHELTER
       namaShelter: zod.string().min(3).optional(),
@@ -68,7 +67,7 @@ export class AuthValidation {
   // ============================================================
   // LOGIN — 1 schema untuk semua role
   // ============================================================
-  static readonly LOGIN = zod.object({
+  static readonly LOGIN_USER = zod.object({
     body: zod.object({
       email: zod
         .string()
@@ -84,5 +83,5 @@ export class AuthValidation {
 }
 
 // Type exports
-export type AuthRegisterInput = zod.infer<typeof AuthValidation.REGISTER>['body']
-export type AuthLoginInput = zod.infer<typeof AuthValidation.LOGIN>['body']
+export type AuthRegisterInput = zod.infer<typeof AuthValidation.REGISTER_USER>['body']
+export type AuthLoginInput = zod.infer<typeof AuthValidation.LOGIN_USER>['body']

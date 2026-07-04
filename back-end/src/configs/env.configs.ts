@@ -5,3 +5,5 @@ export const API_PREFIX = process.env.API_PREFIX;
 export const WHITE_LIST = process.env.WHITE_LIST?.split(','); // ["localhost:3000", "localhost:5173"]
 export const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY; 
 export const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN;
+export const JWT_SECRET_VERIFICATION_KEY = 'abc12345';
+export const JWT_VERIFICATION_EXPIRES_IN = '1h';

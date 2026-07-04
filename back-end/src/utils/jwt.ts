@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { JWT_EXPIRES_IN, JWT_SECRET_KEY, JWT_SECRET_VERIFICATION_KEY, JWT_VERIFICATION_EXPIRES_IN } from '../configs/env.config';
+import { JWT_EXPIRES_IN, JWT_SECRET_KEY, JWT_SECRET_VERIFICATION_KEY, JWT_VERIFICATION_EXPIRES_IN } from '../configs/env.configs'
 import type { StringValue } from 'ms';
 export class JWTUtil {
   static signToken(payload: any) {
