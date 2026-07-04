@@ -1,10 +1,13 @@
 import { Router } from "express";
-
 import userController from "../controler/donatur.controler";
+import { verifyToken, checkRole } from "../middleware/auth.middleware";
 
-const router = Router();
+const donaturRouter = Router();
 
-router.post("/register", userController.register);
-router.post("/login", userController.login);
+donaturRouter.post("/register", userController.register);
+donaturRouter.post("/login", userController.login);
 
-export default router;
+donaturRouter.get("/profile", verifyToken, userController.getProfile);
+donaturRouter.get("/admin/users", verifyToken, checkRole(["ADMIN"]), userController.getAllUsersDummy);
+
+export default donaturRouter;

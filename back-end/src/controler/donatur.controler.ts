@@ -55,14 +55,35 @@ export class UserController {
         message: "Login successfully",
         data: userLogin,
       });
-    } catch (error: any) {
+   } catch (error: any) {
       return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: error?.message || "Failed to login",
         data: null,
       });
     }
+  } 
+
+  async getProfile(req: Request, res: Response) {
+    try {
+      const user = (req as any).user;
+      return res.status(StatusCodes.OK).json({ // FIXED resizeBy to res
+        success: true,
+        message: "Selamat datang di profil Anda!",
+        data: user,
+      });
+    } catch (error) {
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ success: false, message: "Error" }); // FIXED resizeBy to res
+    }
   }
-}
+
+  async getAllUsersDummy(req: Request, res: Response) {
+    return res.status(StatusCodes.OK).json({ // FIXED resizeBy to res
+      success: true,
+      message: "Halo Admin! Ini adalah data rahasia.",
+    });
+  }
+
+} 
 
 export default new UserController();

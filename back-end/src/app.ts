@@ -2,7 +2,7 @@ import express, { NextFunction, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import 'dotenv/config';
 import AuthRouter from './Router/AuthRouter';
-
+import donaturRouter from './Router/donatur.routes';
 import userRoutes from './Router/donatur.routes';
 
 const PORT: number = parseInt(process.env.PORT!) || 8001;
@@ -27,6 +27,9 @@ const app = express();
 app.use(express.json());
 
 app.use(`${API_PREFIX}/auth`, userRoutes);
+
+app.use(`${API_PREFIX}/donatur`, donaturRouter);
+console.log(`[⚡APP] Donatur routes initialized on prefix: ${API_PREFIX}/donatur`);
 
 app.get('/ping', (_: Request, res: Response) => {
   res.status(StatusCodes.OK).json({ message: 'pong' });

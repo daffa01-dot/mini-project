@@ -1,36 +1,37 @@
 import { prisma } from "../configs/prisma.-client-config";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
-import { Request, Response } from "express";
-import { StatusCodes } from "http-status-codes";
-
-const JWT_SECRET = process.env.JWT_SECRET || "secret_super_aman";
-
+import { registerSchema } from "../utils/validation";
+import { Role } from "@prisma/client";
 export class UserService {
-  async register(payload: { email: any; password: any; role: any; fullName: any; phoneNumber: any; address?: any }) {
-    const { email, password, role, fullName, phoneNumber, address } = payload;
+  // --- REGISTER METHOD ---
+  async register(payload: any) {
+    // 1. Zod Validation (replaces all your manual if-checks)
+    const validatedData = registerSchema.parse(payload);
+    const { email, password, role, fullName, phoneNumber, address } = validatedData;
 
-    if (!email || !password || !role) {
-      throw new Error("Email, password, dan role wajib diisi!");
-    }
+    // 2. Email Check (database check)
+    const existingUser = await prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+    });
+    if (existingUser) throw new Error("Email ini sudah terdaftar.");
 
-    // 1. Tulis data ke tabel user menggunakan prisma utama
+    // 3. Password Hashing
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // 4. Create User
     const newUser = await prisma.user.create({
       data: {
-        email,
-        password,
-        // PERBAIKAN DI SINI: Ubah teks menjadi HURUF BESAR SEMUA (.toUpperCase()) 
-        // agar cocok dengan tipe data Enum Role di schema.prisma
-        role: role.toUpperCase() 
-      }
+        email: email.toLowerCase(),
+        password: hashedPassword,
+        role: role.toUpperCase() as Role,
+      },
     });
 
-    // 2. Jika perannya donatur, tulis data ke profil donatur secara mandiri
-    // Pastikan pengecekan string tetap aman menggunakan .toLowerCase() atau .toUpperCase()
-    if (role.toLowerCase() === 'donatur') {
+    // 5. Profile Creation (Keep your original logic)
+    if (role.toUpperCase() === 'DONATUR') {
       const newDonatur = await prisma.donatur.create({
         data: {
-          userId: newUser.id, // Ambil ID yang sukses terbit dari proses 1
+          userId: newUser.id,
           fullName: fullName || "Belum ada nama",
           phoneNumber: phoneNumber || "",
           address: address || ""
@@ -41,22 +42,24 @@ export class UserService {
 
     return { user: newUser, profile: null };
   }
+
+  // --- LOGIN METHOD ---
   async login(payload: { usernameOrEmail: any; password: any }) {
-    const usernameOrEmail = payload?.usernameOrEmail || "";
-    const password = payload?.password || "";
+    const { usernameOrEmail, password } = payload;
 
     if (!usernameOrEmail || !password) {
-      throw new Error("Email dan password wajib diisi di Postman!");
+      throw new Error("Email dan password wajib diisi!");
     }
 
     const user = await prisma.user.findUnique({
-      where: { email: usernameOrEmail },
+      where: { email: usernameOrEmail.toLowerCase() },
     });
 
-    if (!user || user.password !== password) {
+    if (!user || !(await bcrypt.compare(password, user.password))) {
       throw new Error("Email atau password salah!");
     }
 
+    // Hide password before returning
     const { password: _, ...userWithoutPassword } = user;
     return userWithoutPassword;
   }
