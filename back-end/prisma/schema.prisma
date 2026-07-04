@@ -1,29 +1,103 @@
-// prisma/schema.prisma
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider  = "postgresql"
-  // url       = env("DATABASE_URL")
-  // directUrl = env("DIRECT_URL")
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
-// ============================================================
-// ENUM
-// ============================================================
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  password    String
+  role        Role     @default(DONATUR)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  namaLengkap String
+  noWhatsapp  String?
+  donasi      Donasi[]
+  shelter     Shelter?
+}
+
+model Shelter {
+  id               String   @id @default(uuid())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  userId           String   @unique
+  alamatLengkap    String
+  atasNamaRekening String
+  deskripsi        String
+  fotoBanner       String?
+  isAktif          Boolean  @default(true)
+  kota             String
+  namaBank         String
+  namaShelter      String
+  noWhatsapp       String
+  nomorRekening    String
+  donasi           Donasi[]
+  satwa            Satwa[]
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Satwa {
+  id           String       @id @default(uuid())
+  shelterId    String
+  nama         String
+  jenis        JenisSatwa
+  ras          String?
+  umur         Int
+  kelamin      KelaminSatwa
+  foto         String?
+  deskripsi    String?
+  riwayatMedis String?
+  status       StatusSatwa  @default(TERSEDIA)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  donasi       Donasi[]
+  laporan      Laporan[]
+  shelter      Shelter      @relation(fields: [shelterId], references: [id], onDelete: Cascade)
+}
+
+model Donasi {
+  id        String       @id @default(uuid())
+  donaturId String
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  buktiResi String
+  catatan   String?
+  nominal   Int
+  satwaId   String?
+  shelterId String
+  status    StatusDonasi @default(MENUNGGU)
+  donatur   User         @relation(fields: [donaturId], references: [id])
+  satwa     Satwa?       @relation(fields: [satwaId], references: [id])
+  shelter   Shelter      @relation(fields: [shelterId], references: [id])
+}
+
+model Laporan {
+  id        String   @id @default(uuid())
+  satwaId   String
+  judul     String
+  deskripsi String
+  foto      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  satwa     Satwa    @relation(fields: [satwaId], references: [id])
+}
 
 enum Role {
-   SUPER_ADMIN
+ SUPER_ADMIN
   SHELTER
   DONATUR
 }
+
 enum JenisSatwa {
-  KUCING
   ANJING
-  LAINNYA
+  KUCING
 }
+
 enum KelaminSatwa {
   JANTAN
   BETINA
@@ -39,109 +113,4 @@ enum StatusDonasi {
   MENUNGGU
   DIVERIFIKASI
   DITOLAK
-}
-
-// ============================================================
-// USER
-// ============================================================
-
-model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
-  password      String
-  namaLengkap   String
-  noWhatsapp    String?
-  role          Role      @default(DONATUR)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  // Relasi
-  shelter       Shelter?
-  donasi        Donasi[]
-}
-
-// ============================================================
-// SHELTER
-// ============================================================
-
-model Shelter {
-  id                String    @id @default(uuid())
-  userId            String    @unique
-  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  namaShelter       String
-  deskripsi         String
-  kota              String
-  alamatLengkap     String
-  noWhatsapp        String
-  fotoBanner        String?
-  isAktif           Boolean   @default(true)
-  namaBank          String
-  atasNamaRekening  String
-  nomorRekening     String
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-
-  // Relasi
-  satwa             Satwa[]
-  donasi            Donasi[]
-}
-
-// ============================================================
-// SATWA
-// ============================================================
-
-model Satwa {
-  id            String        @id @default(uuid())
-  shelterId     String
-  shelter       Shelter       @relation(fields: [shelterId], references: [id], onDelete: Cascade)
-  nama          String
-  Jenis         JenisSatwa
-  ras           String?
-  umur          Int           // dalam bulan
-  kelamin       KelaminSatwa
-  foto          String?
-  deskripsi     String?
-  riwayatMedis  String?
-  status        StatusSatwa   @default(TERSEDIA)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-
-  // Relasi
-  donasi        Donasi[]
-  laporan       Laporan[]
-}
-
-// ============================================================
-// DONASI
-// ============================================================
-
-model Donasi {
-  id          String        @id @default(uuid())
-  donaturId   String
-  donatur     User          @relation(fields: [donaturId], references: [id])
-  shelterId   String
-  shelter     Shelter       @relation(fields: [shelterId], references: [id])
-  satwaId     String?
-  satwa       Satwa?        @relation(fields: [satwaId], references: [id])
-  nominal     Int           // dalam rupiah
-  buktiResi   String        // URL Supabase Storage
-  status      StatusDonasi  @default(MENUNGGU)
-  catatan     String?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-}
-
-// ============================================================
-// LAPORAN KABAR SATWA
-// ============================================================
-
-model Laporan {
-  id          String    @id @default(uuid())
-  satwaId     String
-  satwa       Satwa     @relation(fields: [satwaId], references: [id])
-  judul       String
-  deskripsi   String
-  foto        String?   // URL Supabase Storage
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
 }
