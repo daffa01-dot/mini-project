@@ -61,19 +61,25 @@ model Satwa {
 }
 
 model Donasi {
-  id        String       @id @default(uuid())
-  donaturId String
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
-  buktiResi String
-  catatan   String?
-  nominal   Int
-  satwaId   String?
-  shelterId String
-  status    StatusDonasi @default(MENUNGGU)
-  donatur   User         @relation(fields: [donaturId], references: [id])
-  satwa     Satwa?       @relation(fields: [satwaId], references: [id])
-  shelter   Shelter      @relation(fields: [shelterId], references: [id])
+  id             String       @id @default(uuid())
+  donaturId      String
+  satwaId        String?      // Dibikin opsional agar jika data satwa dihapus, rekam jejak donasi tetap aman
+  shelterId      String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  buktiResi      String       // Pada endpoint awal diisi string kosong "", diupdate setelah upload file
+  catatan        String?
+  nominal        Int
+  status         StatusDonasi @default(MENUNGGU)
+  
+  // Tambahan Fitur Keamanan Keuangan & Audit Trail 🛡️
+  alasanDitolak  String?      // Wajib diisi oleh Shelter jika status berubah menjadi DITOLAK
+  diverifikasiAt DateTime?    // Mengetahui kapan waktu pasti shelter menyetujui/menolak donasi ini
+
+  // Pengamanan Integritas Relasi (OnDelete Actions)
+  donatur        User         @relation(fields: [donaturId], references: [id], onDelete: Restrict)
+  satwa          Satwa?       @relation(fields: [satwaId], references: [id], onDelete: SetNull)
+  shelter        Shelter      @relation(fields: [shelterId], references: [id], onDelete: Restrict)
 }
 
 model Laporan {
@@ -84,7 +90,7 @@ model Laporan {
   foto      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  satwa     Satwa    @relation(fields: [satwaId], references: [id])
+  satwa     Satwa    @relation(fields: [satwaId], references: [id], onDelete: Cascade)
 }
 
 enum Role {
