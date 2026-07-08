@@ -12,9 +12,7 @@ const prisma = new PrismaClient()
 const SALT_ROUNDS = 10; // Dibutuhkan untuk bcrypt.hash
 
 export class AuthService {
-  // ============================================================
-  // REGISTER
-  // ============================================================
+
   static async register({ body }: { body: AuthRegisterInput }) {
     const {
       email, password, namaLengkap, noWhatsapp, role,

@@ -52,6 +52,7 @@ model Satwa {
   foto         String?
   deskripsi    String?
   riwayatMedis String?
+  danaTerkumpul Int      @default(0) //
   status       StatusSatwa  @default(TERSEDIA)
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt

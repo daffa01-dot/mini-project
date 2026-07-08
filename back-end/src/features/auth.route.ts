@@ -20,7 +20,6 @@ authRouter.post("/login-donatur", DonaturController.login);
 authRouter.get(
   "/profile-donatur", 
   AuthMiddleware.authenticated(secretKey), 
-  AuthMiddleware.authorized([Role.DONATUR]), 
   DonaturController.getProfile
 );
 

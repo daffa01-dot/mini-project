@@ -5,8 +5,9 @@ import path from 'path';
 import { StatusCodes } from 'http-status-codes';
 import authRoute from './features/auth.route';
 import donaturRouter from './donatur/donatur-route';
-import donasiRouter from './donasi/donasi.route'; // 1. IMPORT ROUTER DONASI BARU
-// Impor konfigurasi dari file env config Anda
+import donasiRouter from './donasi/donasi.route'; 
+import laporanRouter from './laporan/laporan.route'; // Import sudah aman
+import router from './satwa/satwa.route';
 import { PORT, API_PREFIX, WHITE_LIST } from './configs/env.configs';
 
 const app = express();
@@ -14,10 +15,10 @@ const app = express();
 // 1. Konfigurasi Middleware CORS
 app.use(
   cors({
-    origin: WHITE_LIST, // Menerima array dari configs/env.config
+    origin: WHITE_LIST, 
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true, // Izinkan pengiriman cookie/token dari frontend
+    credentials: true, 
   }),
 );
 
@@ -25,19 +26,22 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
-// 3. Pendaftaran Route Fitur (Menggunakan API_PREFIX)
+// =========================================================================
+// 3. PENDAFTARAN ROUTE FITUR (SERAGAMKAN MENGGUNAKAN API_PREFIX)
+// =========================================================================
 app.use(`${API_PREFIX}/auth`, authRoute);
 app.use(`${API_PREFIX}/donatur`, donaturRouter);
-app.use(`${API_PREFIX}/donasi`, donasiRouter); // 2. DAFTARKAN ROUTER DONASI DI SINI
+app.use(`${API_PREFIX}/donasi`, donasiRouter); 
+app.use(`${API_PREFIX}/laporan`, laporanRouter); // <--- PINDAHKAN KE SINI (Gunakan API_PREFIX)
+app.use(`${API_PREFIX}/satwa`, router); // Endpoint Satwa aktif!
 
-// 4. Akses File Static (Untuk file upload seperti gambar/dokumen)
+
+// 4. Akses File Static
 app.use(
   `${API_PREFIX}/src/uploads`,
   express.static(path.join(__dirname, 'uploads')),
 );
 
-// 3. AKSES FILE STATIC KHUSUS RESI TRANSFER MANUAL (Agar gambar resi bisa diakses via browser)
-// URL aksesnya nanti akan menjadi: http://localhost:PORT/api/v1/uploads/resi/nama-file.png
 app.use(
   `${API_PREFIX}/uploads`,
   express.static(path.join(process.cwd(), 'public/uploads')),
@@ -57,10 +61,14 @@ app.use((err: any, _: Request, res: Response, __: NextFunction) => {
   });
 });
 
-// 7. Menjalankan Server (Pastikan NODE_ENV di .env adalah "development")
-if (process.env.NODE_ENV === 'Mini-Project') {
+// =========================================================================
+// 7. JALANKAN SERVER (HAPUS ATAU LONGGARKAN IF STATEMENT AGAR PASTI JALAN)
+// =========================================================================
+// Menggunakan OR operator agar jika NODE_ENV tidak terset, server tetap mau menyala saat 'npm run dev'
+if (process.env.NODE_ENV === 'Mini-Project' || process.env.NODE_ENV === 'development' || !process.env.NODE_ENV) {
   app.listen(PORT, () => {
     console.log(`[⚡APP] Application is running on port: ${PORT}`);
+    console.log(`[🔗PREFIX] API Path Prefix is: ${API_PREFIX}`);
   });
 }
 
