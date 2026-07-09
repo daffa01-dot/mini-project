@@ -88,9 +88,10 @@ export class DonasiController {
 
       let result;
 
-      if (role === "ADMIN") {
+      // Mengakomodasi SUPER_ADMIN dan ADMIN sesuai enum database
+      if (role === "SUPER_ADMIN" || role === "ADMIN") {
         result = await DonasiService.getRiwayatAdmin();
-      } else if (role === "MITRA_SHELTER") {
+      } else if (role === "SHELTER") { // 🟢 Diubah dari MITRA_SHELTER menjadi SHELTER
         if (!shelterId) {
           return res.status(StatusCodes.BAD_REQUEST).json({
             success: false,

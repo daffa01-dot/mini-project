@@ -120,7 +120,7 @@ export class DonasiService {
       },
       termsAndConditions: [
         "Donasi yang diberikan bersifat sukarela dan tidak dapat ditarik kembali dengan alasan apa pun.",
-        "Donatur wajib mengunggah foto bukti resi transfer yang jelas dan sah setelah melakukan pembayaran.",
+        "Donatur wajib mengunggah foto bukti resi transfer yang jelas and sah setelah melakukan pembayaran.",
         "Pihak shelter akan memverifikasi mutasi bank Anda secara manual. Status akan berubah setelah disetujui.",
         "Batas waktu unggah bukti resi adalah maksimal 1x24 jam sejak pembuatan instruksi donasi ini.",
       ],
@@ -205,21 +205,13 @@ export class DonasiService {
         },
       });
 
+      // HANYA UPDATE DANA TERKUMPUL JIKA TARGETNYA SPESIFIK KE SATWA
       if (statusBaru === "DIVERIFIKASI") {
         const nominalDonasi = updatedDonasi?.nominal || updatedDonasi?.amount || 0;
 
         if (updatedDonasi.satwaId) {
           await (tx as any).satwa.update({
             where: { id: updatedDonasi.satwaId },
-            data: {
-              danaTerkumpul: {
-                increment: nominalDonasi,
-              },
-            },
-          });
-        } else if (updatedDonasi.shelterId) {
-          await (tx as any).shelter.update({
-            where: { id: updatedDonasi.shelterId },
             data: {
               danaTerkumpul: {
                 increment: nominalDonasi,
@@ -238,48 +230,50 @@ export class DonasiService {
       };
     });
   }
+
+  // ==========================================================
+  // GET RIWAYAT UNTUK DONATUR (Donasi Keluar)
+  // ==========================================================
   static async getRiwayatDonatur(donaturId: string) {
-  if (!donaturId) {
-    throw new ResponseError(StatusCodes.BAD_REQUEST, "ID Donatur tidak valid atau tidak terotentikasi");
+    if (!donaturId) {
+      throw new ResponseError(StatusCodes.BAD_REQUEST, "ID Donatur tidak valid atau tidak terotentikasi");
+    }
+
+    return await (prisma as any).donasi.findMany({
+      where: { donaturId },
+      include: {
+        satwa: { select: { nama: true } },
+        shelter: { select: { namaShelter: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
   }
 
-  return await (prisma as any).donasi.findMany({
-    where: { donaturId },
-    include: {
-      satwa: { select: { nama: true } },
-      shelter: { select: { namaShelter: true } } // Diubah: Hanya memanggil namaShelter
-    },
-    orderBy: { createdAt: 'desc' }
-  });
-}
+  // ==========================================================
+  // GET RIWAYAT UNTUK MITRA SHELTER (Hanya Donasi Masuk)
+  // ==========================================================
+  static async getRiwayatShelter(shelterId: string) {
+    return await (prisma as any).donasi.findMany({
+      where: { shelterId },
+      include: {
+        donatur: { select: { namaLengkap: true, email: true } }, 
+        satwa: { select: { nama: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+  }
 
-// ==========================================================
-// GET RIWAYAT UNTUK MITRA SHELTER (Hanya Donasi Masuk)
-// ==========================================================
-static async getRiwayatShelter(shelterId: string) {
-  return await (prisma as any).donasi.findMany({
-    where: { shelterId },
-    include: {
-      // Pastikan nama relasi 'user' atau 'donatur' sesuai skema Anda. 
-      // Jika error, sesuaikan select di bawah ini dengan kolom user Anda (misal: namaLengkap atau name)
-      donatur: { select: { namaLengkap: true, email: true } }, 
-      satwa: { select: { nama: true } }
-    },
-    orderBy: { createdAt: 'desc' }
-  });
-}
-
-// ==========================================================
-// GET RIWAYAT UNTUK ADMIN (Seluruh Transaksi Nasional)
-// ==========================================================
-static async getRiwayatAdmin() {
-  return await (prisma as any).donasi.findMany({
-    include: {
-      donatur: { select: { namaLengkap: true } },
-      satwa: { select: { nama: true } },
-      shelter: { select: { namaShelter: true } } // Diubah: Hanya memanggil namaShelter
-    },
-    orderBy: { createdAt: 'desc' }
-  });
-}
+  // ==========================================================
+  // GET RIWAYAT UNTUK ADMIN (Seluruh Transaksi Nasional)
+  // ==========================================================
+  static async getRiwayatAdmin() {
+    return await (prisma as any).donasi.findMany({
+      include: {
+        donatur: { select: { namaLengkap: true } },
+        satwa: { select: { nama: true } },
+        shelter: { select: { namaShelter: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+  }
 }
