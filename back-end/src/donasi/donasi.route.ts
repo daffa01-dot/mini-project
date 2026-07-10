@@ -12,6 +12,10 @@ const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 // Panggil fungsi authenticated() dengan menyertakan secret key-nya
 const auth = AuthMiddleware.authenticated(JWT_SECRET);
 
+// 🛠️ PERBAIKAN KRITIS (RBAC): Ambil middleware otorisasi role dari AuthMiddleware Anda
+// Sesuaikan nama fungsinya (misal: 'authorized', 'roleGuard', atau 'authorize')
+const authorizeShelterOrAdmin = AuthMiddleware.authorized(["SUPER_ADMIN", "SHELTER"]);
+
 // 2. PERBAIKAN: Buat instansiasi khusus untuk donasi menggunakan 'diskStorage' dengan batas file 2MB
 const donasiUpload = new MulterMiddleware('diskStorage').upload(2 * 1024 * 1024);
 
@@ -30,8 +34,14 @@ router.patch(
   DonasiController.uploadBukti,
 );
 
-// Endpoint 3: Verifikasi (Hanya user yang login)
-router.patch("/:donasiId/verifikasi", auth, DonasiController.verifikasi);
+// 🔴 REVISI UTAMA: Tambahkan 'authorizeShelterOrAdmin' setelah 'auth'
+// Ini mencegah Donatur biasa atau pihak luar menembak API verifikasi untuk mengubah status donasi secara ilegal
+router.patch(
+  "/:donasiId/verifikasi", 
+  auth, 
+  authorizeShelterOrAdmin, 
+  DonasiController.verifikasi
+);
 
 // PERBAIKAN DI SINI: Tambahkan 'auth' agar token donatur diekstrak sebelum ditarik datanya
 router.get("/riwayat", auth, DonasiController.getRiwayat);

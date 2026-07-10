@@ -9,7 +9,6 @@ import {
 } from './auth.validation';
 
 const prisma = new PrismaClient()
-const SALT_ROUNDS = 10;
 
 export class AuthService {
 
@@ -20,7 +19,7 @@ export class AuthService {
       namaBank, atasNamaRekening, nomorRekening
     } = body
 
-    // Cek email sudah terdaftar
+    // 🟢 PERBAIKAN 1: Menggunakan ResponseError (409 Conflict) jika email sudah ada
     const existing = await prisma.user.findUnique({
        where: { 
         email: body.email,
@@ -65,6 +64,11 @@ export class AuthService {
 
     // ── SHELTER ───────────────────────────────────────────────
     if (role === Role.SHELTER) {
+      // 🟢 PERBAIKAN 2: Proteksi tambahan agar parameter input tidak bernilai null/undefined saat create
+      if (!namaShelter || !deskripsi || !kota || !alamatLengkap || !namaBank || !atasNamaRekening || !nomorRekening) {
+        throw new ResponseError(StatusCodes.BAD_REQUEST, 'Semua data profil dan rekening shelter wajib diisi')
+      }
+
       const result = await prisma.$transaction(async (tx) => {
         const user = await tx.user.create({
           data: {
@@ -79,14 +83,14 @@ export class AuthService {
         const shelter = await tx.shelter.create({
           data: {
             userId: user.id,
-            namaShelter: namaShelter!,
-            deskripsi: deskripsi!,
-            kota: kota!,
-            alamatLengkap: alamatLengkap!,
+            namaShelter,
+            deskripsi,
+            kota,
+            alamatLengkap,
             noWhatsapp: noWhatsapp!,
-            namaBank: namaBank!,
-            atasNamaRekening: atasNamaRekening!,
-            nomorRekening: nomorRekening!
+            namaBank,
+            atasNamaRekening,
+            nomorRekening
           }
         })
 
@@ -108,28 +112,29 @@ export class AuthService {
 
     const user = await prisma.user.findUnique({
       where: { email },
-      include: { shelter: true } // 🟢 Data shelter sudah ikut diambil di sini
+      include: { shelter: true }
     })
 
-    // Cek user ada atau tidak
+    // 🟢 PERBAIKAN 3: Menggunakan ResponseError (401 Unauthorized) jika user tidak ditemukan
     if (!user) {
       throw new ResponseError(StatusCodes.UNAUTHORIZED, 'Email or password is incorrect')
     }
 
+    // 🟢 PERBAIKAN 4: Menggunakan ResponseError (401 Unauthorized) jika password salah
     const isValid = await BcryptUtil.comparePassword(password, user.password)
     if (!isValid) {
       throw new ResponseError(StatusCodes.UNAUTHORIZED, 'Email or password is incorrect')
     }
 
-    // 🟢 PERBAIKAN UTAMA: Ambil id shelter dari data relasi (jika user adalah SHELTER)
-   const shelterId = user.shelter?.id || null;
-    // 🟢 PERBAIKAN: Masukkan shelterId ke dalam payload JWT Token
-   const token = JWTUtil.signToken({
+    const shelterId = user.shelter?.id || null;
+    
+    const token = JWTUtil.signToken({
       id: user.id,
       email: user.email,
       role: user.role,
-      shelterId: shelterId // 🟢 Kirim variabel murni, bukan tipe data 'string | null'
+      shelterId: shelterId 
     } as any);
+
     const { password: _, ...safeUser } = user
     return { safeUser, token }
   }
