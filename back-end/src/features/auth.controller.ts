@@ -1,7 +1,5 @@
 import { Request, Response, NextFunction } from 'express'
 import { AuthService } from './auth.service'
-import { validate } from '../validation/validate'
-import { AuthValidation } from './auth.validation'
 import { StatusCodes } from 'http-status-codes'
 import { ResponseError } from '../utils/response-error.util'
 import { Role } from '@prisma/client'
@@ -13,9 +11,8 @@ export class AuthController {
   // ============================================================
   static async register_user(req: Request, res: Response, next: NextFunction) {
     try {
-      const { body } = validate(AuthValidation.REGISTER_USER, {
-        body: req.body
-      })
+      // 🟢 PERBAIKAN: Langsung ambil data dari req.body karena validasi sudah lolos di tingkat router
+      const body = req.body
 
       // PROTEKSI: Jika payload mencoba mendaftarkan DONATUR, lempar error
       if (body.role === Role.DONATUR) {
@@ -42,9 +39,8 @@ export class AuthController {
   // ============================================================
   static async loginShelter(req: Request, res: Response, next: NextFunction) {
     try {
-      const { body } = validate(AuthValidation.LOGIN_USER, {
-        body: req.body
-      }) as { body: typeof req.body }
+      // 🟢 PERBAIKAN: Ambil data kredensial langsung tanpa casting manual yang memicu TSError
+      const body = req.body
 
       const { safeUser, token } = await AuthService.login({ body })
 
@@ -76,4 +72,21 @@ export class AuthController {
       next(error)
     }
   }
-}
+
+  static async logout(req: Request, res: Response, next: NextFunction) {
+    try {
+      // Menghapus cookie bernama 'token' yang dikirimkan saat login tadi
+      res.clearCookie('token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'Mini-Project',
+        sameSite: 'strict'
+      })
+
+      return res.status(StatusCodes.OK).json({
+        success: true,
+        message: 'Logout successful. Token session cleared.'
+      })
+    } catch (error) {
+      next(error)
+    }
+  }}

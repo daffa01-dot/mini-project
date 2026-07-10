@@ -5,20 +5,21 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL") 
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
-  id          String   @id @default(uuid())
-  email       String   @unique
+  id          String      @id @default(uuid())
+  email       String      @unique
   password    String
-  role        Role     @default(DONATUR)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  role        Role        @default(DONATUR)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
   namaLengkap String
   noWhatsapp  String?
   donasi      Donasi[]
   shelter     Shelter?
+  mailerLogs  MailerLog[] // 🟢 Relasi balik ke tabel logs
 }
 
 model Shelter {
@@ -42,45 +43,42 @@ model Shelter {
 }
 
 model Satwa {
-  id           String       @id @default(uuid())
-  shelterId    String
-  nama         String
-  jenis        JenisSatwa
-  ras          String?
-  umur         Int
-  kelamin      KelaminSatwa
-  foto         String?
-  deskripsi    String?
-  riwayatMedis String?
-  danaTerkumpul Int      @default(0) //
-  status       StatusSatwa  @default(TERSEDIA)
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  donasi       Donasi[]
-  laporan      Laporan[]
-  shelter      Shelter      @relation(fields: [shelterId], references: [id], onDelete: Cascade)
+  id            String       @id @default(uuid())
+  shelterId     String
+  nama          String
+  jenis         JenisSatwa
+  ras           String?
+  umur          Int
+  kelamin       KelaminSatwa
+  foto          String?
+  deskripsi     String?
+  riwayatMedis  String?
+  danaTerkumpul Int          @default(0)
+  status        StatusSatwa  @default(TERSEDIA)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  donasi        Donasi[]
+  laporan       Laporan[]
+  shelter       Shelter      @relation(fields: [shelterId], references: [id], onDelete: Cascade)
 }
 
 model Donasi {
   id             String       @id @default(uuid())
   donaturId      String
-  satwaId        String?      // Dibikin opsional agar jika data satwa dihapus, rekam jejak donasi tetap aman
+  satwaId        String?
   shelterId      String
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
-  buktiResi      String       // Pada endpoint awal diisi string kosong "", diupdate setelah upload file
+  buktiResi      String
   catatan        String?
   nominal        Int
   status         StatusDonasi @default(MENUNGGU)
-  
-  // Tambahan Fitur Keamanan Keuangan & Audit Trail 🛡️
-  alasanDitolak  String?      // Wajib diisi oleh Shelter jika status berubah menjadi DITOLAK
-  diverifikasiAt DateTime?    // Mengetahui kapan waktu pasti shelter menyetujui/menolak donasi ini
+  alasanDitolak  String?
+  diverifikasiAt DateTime?
 
-  // Pengamanan Integritas Relasi (OnDelete Actions)
-  donatur        User         @relation(fields: [donaturId], references: [id], onDelete: Restrict)
-  satwa          Satwa?       @relation(fields: [satwaId], references: [id], onDelete: SetNull)
-  shelter        Shelter      @relation(fields: [shelterId], references: [id], onDelete: Restrict)
+  donatur User     @relation(fields: [donaturId], references: [id], onDelete: Restrict)
+  satwa   Satwa?   @relation(fields: [satwaId], references: [id], onDelete: SetNull)
+  shelter Shelter  @relation(fields: [shelterId], references: [id], onDelete: Restrict)
 }
 
 model Laporan {
@@ -92,6 +90,27 @@ model Laporan {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   satwa     Satwa    @relation(fields: [satwaId], references: [id], onDelete: Cascade)
+}
+
+// 🟢 MODEL BARU UNTUK AUDIT TRAIL EMAIL
+model MailerLog {
+  id            String               @id @default(uuid())
+  userId        String?              @map("user_id")
+  emailTo       String               @map("email_to") @db.VarChar(150)
+  subject       String               @db.VarChar(255)
+  body          String
+  referenceId   String?              @map("reference_id")
+  sentAt        DateTime?            @map("sent_at")
+  errorMessage  String?              @map("error_message")
+  createdAt     DateTime             @default(now()) @map("created_at")
+  updatedAt     DateTime             @updatedAt @map("updated_at")
+  deleted_at    DateTime?
+  type          MailerLogType
+  referenceType MailerReferenceType? @map("reference_type")
+  status        MailerStatus         @default(pending)
+  user          User?                @relation(fields: [userId], references: [id])
+
+  @@map("mailer_logs")
 }
 
 enum Role {
@@ -121,4 +140,20 @@ enum StatusDonasi {
   MENUNGGU
   DIVERIFIKASI
   DITOLAK
+}
+
+// 🟢 ENUM PENDUKUNG MAILER LOG
+enum MailerLogType {
+  donasi_berhasil
+  donasi_gagal
+}
+
+enum MailerReferenceType {
+  donasi
+}
+
+enum MailerStatus {
+  pending
+  success
+  failed
 }

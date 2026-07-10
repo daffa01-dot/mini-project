@@ -54,6 +54,9 @@ app.get("/ping", (_: Request, res: Response) => {
 
 // 6. Global Error Handling Middleware
 app.use((err: any, _: Request, res: Response, __: NextFunction) => {
+  // 🟢 Tambahkan console.log ini untuk melacak file pembuat error:
+  console.log("🔥 ERROR KETEMU DI SINI ->", err);
+
   res.status(err?.status || StatusCodes.INTERNAL_SERVER_ERROR).json({
     success: false,
     message: err?.message || "Internal Server Error",
@@ -61,14 +64,13 @@ app.use((err: any, _: Request, res: Response, __: NextFunction) => {
   });
 });
 
-if (
-  process.env.NODE_ENV === "Mini-Project" ||
-  process.env.NODE_ENV === "development" ||
-  !process.env.NODE_ENV
-) {
-  app.listen(PORT, () => {
-    console.log(`[⚡APP] Application is running on port: ${PORT}`);
-  });
-}
+// if (
+//   process.env.NODE_ENV === "Mini-Project" ||
+//   process.env.NODE_ENV === "development" ||
+//   !process.env.NODE_ENV
+// ) {
+ app.listen(PORT, () => {
+  console.log(`[⚡APP] Application is running on port: ${PORT}`);
+});
 
 export default app;

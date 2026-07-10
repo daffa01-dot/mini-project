@@ -1,5 +1,5 @@
 import { PrismaClient, Role } from '@prisma/client'
-import bcrypt from 'bcrypt' // Perbaikan import bcrypt
+import bcrypt from 'bcrypt'
 import { JWTUtil } from '../utils/jwt'
 import { ResponseError } from '../utils/response-error.util'
 import { StatusCodes } from 'http-status-codes'
@@ -9,7 +9,7 @@ import {
 } from './auth.validation';
 
 const prisma = new PrismaClient()
-const SALT_ROUNDS = 10; // Dibutuhkan untuk bcrypt.hash
+const SALT_ROUNDS = 10;
 
 export class AuthService {
 
@@ -26,20 +26,19 @@ export class AuthService {
       throw new ResponseError(StatusCodes.CONFLICT, 'Email already registered')
     }
 
-    // Perbaikan cara hashing bcrypt standar
     const hashed = await bcrypt.hash(password, SALT_ROUNDS)
 
     // ── DONATUR ──────────────────────────────────────────────
     if (role === Role.DONATUR) {
-     const user = await prisma.user.create({
-  data: {
-    email,
-    password: hashed,
-    namaLengkap,
-    noWhatsapp: noWhatsapp ?? null, // <-- Ubah bagian ini
-    role: Role.DONATUR
-  }
-})
+      const user = await prisma.user.create({
+        data: {
+          email,
+          password: hashed,
+          namaLengkap,
+          noWhatsapp: noWhatsapp ?? null,
+          role: Role.DONATUR
+        }
+      })
 
       const { password: _, ...safeUser } = user
       return safeUser
@@ -105,7 +104,7 @@ export class AuthService {
 
     const user = await prisma.user.findUnique({
       where: { email },
-      include: { shelter: true }
+      include: { shelter: true } // 🟢 Data shelter sudah ikut diambil di sini
     })
 
     // Cek user ada atau tidak
@@ -113,19 +112,20 @@ export class AuthService {
       throw new ResponseError(StatusCodes.UNAUTHORIZED, 'Email or password is incorrect')
     }
 
-    // Perbaikan: gunakan bcrypt.compare secara langsung
     const isValid = await bcrypt.compare(password, user.password)
     if (!isValid) {
       throw new ResponseError(StatusCodes.UNAUTHORIZED, 'Email or password is incorrect')
     }
 
-    // Perbaikan: Panggil method statis dari JWTUtil (asumsi nama methodnya generateToken atau sign)
+    // 🟢 PERBAIKAN UTAMA: Ambil id shelter dari data relasi (jika user adalah SHELTER)
+   const shelterId = user.shelter?.id || null;
+    // 🟢 PERBAIKAN: Masukkan shelterId ke dalam payload JWT Token
    const token = JWTUtil.signToken({
-  id: user.id,
-  email: user.email,
-  role: user.role
-})
-
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      shelterId: shelterId // 🟢 Kirim variabel murni, bukan tipe data 'string | null'
+    } as any);
     const { password: _, ...safeUser } = user
     return { safeUser, token }
   }

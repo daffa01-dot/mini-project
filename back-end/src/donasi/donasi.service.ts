@@ -43,16 +43,11 @@ export class DonasiService {
 
     let targetShelterId = shelterId;
 
-    // -------------------------------------------------------
-    // KONDISI 1: JIKA USER MENGINPUT SATWA ID
-    // -------------------------------------------------------
     if (satwaId) {
-      // Cari data satwa di database
       const satwa = await (prisma as any).satwa.findFirst({
         where: { id: satwaId },
       });
 
-      // JIKA SATWA ID NGAWUR -> AUTO TOLAK (404)!
       if (!satwa) {
         throw new ResponseError(
           StatusCodes.NOT_FOUND, 
@@ -60,7 +55,6 @@ export class DonasiService {
         );
       }
 
-      // JIKA USER JUGA MENGINPUT SHELTER ID, TAPI TIDAK COCOK DENGAN PEMILIK SATWA -> AUTO TOLAK (400)!
       if (shelterId && shelterId !== satwa.shelterId) {
         throw new ResponseError(
           StatusCodes.BAD_REQUEST,
@@ -68,19 +62,13 @@ export class DonasiService {
         );
       }
 
-      // Gunakan shelterId asli yang terikat pada data satwa tersebut
       targetShelterId = satwa.shelterId;
     }
 
-    // -------------------------------------------------------
-    // KONDISI 2: VALIDASI JARING PENGAMAN SHELTER ID
-    // -------------------------------------------------------
-    // Cari data shelter di database untuk memastikan ID benar-benar eksis (Anti-ID Ngawur)
     const shelter = await (prisma as any).shelter.findFirst({
       where: { id: targetShelterId },
     });
 
-    // JIKA SHELTER ID NGAWUR (BAIK PADA DONASI UMUM / DONASI SATWA) -> AUTO TOLAK (404)!
     if (!shelter) {
       throw new ResponseError(
         StatusCodes.NOT_FOUND,
@@ -88,7 +76,6 @@ export class DonasiService {
       );
     }
 
-    // Buat data donasi awal dengan status MENUNGGU jika semua ID lolos sensor validasi
     const createdDonasi = await (prisma as any).donasi.create({
       data: {
         nominal: nominal,
@@ -101,9 +88,7 @@ export class DonasiService {
       },
     });
 
-    // Menangani kompatibilitas cache properti lama vs baru
-    const namaShelterTujuan =
-      shelter?.namaShelter || shelter?.name || "Shelter Satwa";
+    const namaShelterTujuan = shelter?.namaShelter || shelter?.name || "Shelter Satwa";
     const bankTujuan = shelter?.namaBank || shelter?.bankAccount || "-";
     const noRekTujuan = shelter?.nomorRekening || "";
     const atasNamaTujuan = shelter?.atasNamaRekening || "";
@@ -150,20 +135,15 @@ export class DonasiService {
     }
 
     const updatedDonasi = await (prisma as any).donasi.update({
-      where: {
-        id: donasiId,
-      },
-      data: {
-        buktiResi: buktiResiPath,
-      },
+      where: { id: donasiId },
+      data: { buktiResi: buktiResiPath },
     });
 
     return {
       donasiId: updatedDonasi?.id,
       status: updatedDonasi?.status,
       buktiResi: updatedDonasi?.buktiResi,
-      message:
-        "Bukti resi transfer berhasil diunggah, menunggu verifikasi pihak shelter.",
+      message: "Bukti resi transfer berhasil diunggah, menunggu verifikasi pihak shelter.",
     };
   }
 
@@ -195,9 +175,7 @@ export class DonasiService {
       }
 
       const updatedDonasi = await (tx as any).donasi.update({
-        where: {
-          id: donasiId,
-        },
+        where: { id: donasiId },
         data: {
           status: statusBaru,
           alasanDitolak: statusBaru === "DITOLAK" ? alasanDitolak : null,
@@ -205,7 +183,7 @@ export class DonasiService {
         },
       });
 
-      // HANYA UPDATE DANA TERKUMPUL JIKA TARGETNYA SPESIFIK KE SATWA
+      // Naikkan dana terkumpul pada entitas Satwa jika donasi disetujui (DIVERIFIKASI)
       if (statusBaru === "DIVERIFIKASI") {
         const nominalDonasi = updatedDonasi?.nominal || updatedDonasi?.amount || 0;
 
@@ -213,9 +191,7 @@ export class DonasiService {
           await (tx as any).satwa.update({
             where: { id: updatedDonasi.satwaId },
             data: {
-              danaTerkumpul: {
-                increment: nominalDonasi,
-              },
+              danaTerkumpul: { increment: nominalDonasi },
             },
           });
         }
