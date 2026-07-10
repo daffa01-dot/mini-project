@@ -1,26 +1,24 @@
-import path from "path";
 import fs from "fs";
+import path from "path";
 import handlebars from "handlebars";
 
 export class TemplateUtil {
-  static compile(templateName: string, data: any) {
-    // 🟢 KUNCI PERBAIKAN: Mengunci jalur absolut murni dari root ke folder modules/template Anda
-    const templatePath = path.resolve(
-      process.cwd(),
-      "src",
-      "modules",
-      "template",
-      `${templateName}.hbs`
-    );
+  /**
+   * Mengompilasi template Handlebars (.hbs) menjadi string HTML utuh
+   * @param templateName Nama file hbs (tanpa ekstensi)
+   * @param data Objek berisi variabel yang akan dimasukkan ke dalam email
+   */
+  static getHtmlTemplate(templateName: string, data: Record<string, any>): string {
+    // 1. Tentukan path absolut menuju file .hbs secara akurat
+    const templatePath = path.join(__dirname, `${templateName}.hbs`);
     
-    console.log("🔍 NODE.JS PASTI MENCARI DI SINI ->", templatePath);
-
-    if (!fs.existsSync(templatePath)) {
-      throw new Error(`File template hbs tidak ditemukan di lokasi absolut: ${templatePath}`);
-    }
-    
+    // 2. Baca isi file .hbs tersebut sebagai string teks
     const templateSource = fs.readFileSync(templatePath, "utf-8");
+    
+    // 3. Kompilasi string tersebut menggunakan Handlebars
     const compiledTemplate = handlebars.compile(templateSource);
+    
+    // 4. Suntikkan data objek (nama, nominal, dll) ke dalam template dan kembalikan sebagai string HTML
     return compiledTemplate(data);
   }
 }

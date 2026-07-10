@@ -1,7 +1,8 @@
 import { StatusCodes } from "http-status-codes";
 import prisma from "../configs/prisma-client.config";
 import { ResponseError } from "../utils/response-error.util";
-import { MailerUtil } from "../utils/mailer.util"; // 🟢 TAMBAHKAN IMPORT INI
+import { MailerUtil } from "../utils/mailer.util";
+import { TemplateUtil } from "../modules/template/template.util"; // 🟢 Ditambahkan untuk kompilasi hbs
 import Mail = require("nodemailer/lib/mailer");
 
 // 1. Interface Properti untuk Parameter Fungsi
@@ -159,7 +160,6 @@ export class DonasiService {
   }: VerifikasiDonasiProps) {
     // 1. Eksekusi database update via $transaction
     const resultData = await prisma.$transaction(async (tx) => {
-      // 🟢 DISESUAIKAN: Sertakan data donatur (id, nama, email)
       const donasi = await (tx as any).donasi.findFirst({
         where: { id: donasiId },
         include: {
@@ -215,38 +215,31 @@ export class DonasiService {
         statusBaru: updatedDonasi?.status,
         alasanDitolak: updatedDonasi?.alasanDitolak,
         diverifikasiAt: updatedDonasi?.diverifikasiAt,
-        donatur: donasi.donatur, // Lempar keluar data donatur dari scope transaksi
+        donatur: donasi.donatur, 
       };
     });
 
-    // 2. 🟢 INTEGRASI BARU: Kirim Email + Log setelah Transaksi DB Sukses (Commit)
+    // 2. 🟢 INTEGRASI BARU: Render Handlebars (.hbs) & Kirim Email via MailerUtil
     try {
       if (resultData.donatur && resultData.donatur.email) {
         const nominalFormatted = (resultData.nominal || 0).toLocaleString("id-ID");
 
-        if (statusBaru === "DIVERIFIKASI") {
-          await MailerUtil.sendWithLog({
-            userId: resultData.donatur.id,
-            emailTo: resultData.donatur.email,
-            subject: "Hore! Bukti Donasi Anda Telah Diverifikasi",
-            body: `<h1>Halo ${resultData.donatur.namaLengkap}</h1>
-                   <p>Donasi Anda sebesar <strong>Rp ${nominalFormatted}</strong> telah sukses diverifikasi oleh pihak shelter.</p>
-                   <p>Terima kasih banyak atas ketulusan Anda membantu satwa! 🐾</p>`,
-            referenceId: resultData.donasiId,
-            type: "donasi_berhasil",
-          });
-        } else if (statusBaru === "DITOLAK") {
-          await MailerUtil.sendWithLog({
-            userId: resultData.donatur.id,
-            emailTo: resultData.donatur.email,
-            subject: "Pemberitahuan: Verifikasi Donasi Ditolak",
-            body: `<h1>Halo ${resultData.donatur.namaLengkap}</h1>
-                   <p>Mohon maaf, bukti transfer donasi Anda sebesar <strong>Rp ${nominalFormatted}</strong> ditolak.</p>
-                   <p><strong>Alasan Penolakan:</strong> ${alasanDitolak}</p>`,
-            referenceId: resultData.donasiId,
-            type: "donasi_gagal",
-          });
-        }
+        // Memanfaatkan TemplateUtil untuk mengompilasi berkas donationmail.hbs Anda
+        const htmlBody = TemplateUtil.getHtmlTemplate("donationmail", {
+          namaDonatur: resultData.donatur.namaLengkap,
+          nominal: nominalFormatted,
+          alasanDitolak: statusBaru === "DITOLAK" ? alasanDitolak : null,
+          subject: statusBaru === "DIVERIFIKASI" ? "Bukti Donasi Diverifikasi" : "Verifikasi Donasi Ditolak",
+        });
+
+        await MailerUtil.sendWithLog({
+          userId: resultData.donatur.id,
+          emailTo: resultData.donatur.email,
+          subject: statusBaru === "DIVERIFIKASI" ? "Hore! Bukti Donasi Anda Telah Diverifikasi" : "Pemberitahuan: Verifikasi Donasi Ditolak",
+          body: htmlBody, 
+          referenceId: resultData.donasiId,
+          type: statusBaru === "DIVERIFIKASI" ? "donasi_berhasil" : "donasi_gagal",
+        });
       }
     } catch (mailerError) {
       console.error("[Mailer Integration Error]:", mailerError);

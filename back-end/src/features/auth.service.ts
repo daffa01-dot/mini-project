@@ -1,5 +1,5 @@
 import { PrismaClient, Role } from '@prisma/client'
-import bcrypt from 'bcrypt'
+import { BcryptUtil } from '../utils/bycrypt'
 import { JWTUtil } from '../utils/jwt'
 import { ResponseError } from '../utils/response-error.util'
 import { StatusCodes } from 'http-status-codes'
@@ -21,12 +21,16 @@ export class AuthService {
     } = body
 
     // Cek email sudah terdaftar
-    const existing = await prisma.user.findUnique({ where: { email } })
+    const existing = await prisma.user.findUnique({
+       where: { 
+        email: body.email,
+      },
+     });
     if (existing) {
       throw new ResponseError(StatusCodes.CONFLICT, 'Email already registered')
     }
 
-    const hashed = await bcrypt.hash(password, SALT_ROUNDS)
+    const hashed = await BcryptUtil.hashPassword(body.password);
 
     // ── DONATUR ──────────────────────────────────────────────
     if (role === Role.DONATUR) {
@@ -112,7 +116,7 @@ export class AuthService {
       throw new ResponseError(StatusCodes.UNAUTHORIZED, 'Email or password is incorrect')
     }
 
-    const isValid = await bcrypt.compare(password, user.password)
+    const isValid = await BcryptUtil.comparePassword(password, user.password)
     if (!isValid) {
       throw new ResponseError(StatusCodes.UNAUTHORIZED, 'Email or password is incorrect')
     }

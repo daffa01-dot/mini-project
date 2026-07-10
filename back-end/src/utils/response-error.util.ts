@@ -1,4 +1,7 @@
 export class ResponseError extends Error {
+  getStatusCode(): number {
+    throw new Error("Method not implemented.");
+  }
   private statusCode: number;
   private isExpose: boolean = true;
 
