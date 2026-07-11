@@ -16,6 +16,7 @@ model User {
   role        Role        @default(DONATUR)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
+  deletedAt DateTime?
   namaLengkap String
   noWhatsapp  String?
   donasi      Donasi[]
@@ -95,6 +96,7 @@ model Donasi {
   shelterId      String
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
+   deletedAt DateTime? 
   buktiResi      String
   catatan        String?
   nominal        Int

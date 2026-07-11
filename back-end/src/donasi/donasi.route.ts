@@ -31,6 +31,7 @@ router.patch(
   auth,
   // 3. PERBAIKAN: Ganti variabel lama 'upload' menjadi 'donasiUpload'
   donasiUpload.single("buktiResi"),
+  
   DonasiController.uploadBukti,
 );
 
@@ -44,6 +45,9 @@ router.patch(
 );
 
 // PERBAIKAN DI SINI: Tambahkan 'auth' agar token donatur diekstrak sebelum ditarik datanya
-router.get("/riwayat", auth, DonasiController.getRiwayat);
+router.get("/riwayat", auth, (req, res, next) => {
+    console.log("MASUK KE ROUTE RIWAYAT");
+    next();
+}, DonasiController.getRiwayat);
 
 export default router;

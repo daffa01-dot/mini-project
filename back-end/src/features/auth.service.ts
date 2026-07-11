@@ -19,12 +19,11 @@ export class AuthService {
       namaBank, atasNamaRekening, nomorRekening
     } = body
 
-    // 🟢 PERBAIKAN 1: Menggunakan ResponseError (409 Conflict) jika email sudah ada
     const existing = await prisma.user.findUnique({
-       where: { 
+      where: { 
         email: body.email,
       },
-     });
+    });
     if (existing) {
       throw new ResponseError(StatusCodes.CONFLICT, 'Email already registered')
     }
@@ -64,7 +63,6 @@ export class AuthService {
 
     // ── SHELTER ───────────────────────────────────────────────
     if (role === Role.SHELTER) {
-      // 🟢 PERBAIKAN 2: Proteksi tambahan agar parameter input tidak bernilai null/undefined saat create
       if (!namaShelter || !deskripsi || !kota || !alamatLengkap || !namaBank || !atasNamaRekening || !nomorRekening) {
         throw new ResponseError(StatusCodes.BAD_REQUEST, 'Semua data profil dan rekening shelter wajib diisi')
       }
@@ -80,6 +78,7 @@ export class AuthService {
           }
         })
 
+        // PERBAIKAN: Menggunakan nested write untuk relasi ShelterBank[cite: 2]
         const shelter = await tx.shelter.create({
           data: {
             userId: user.id,
@@ -88,9 +87,13 @@ export class AuthService {
             kota,
             alamatLengkap,
             noWhatsapp: noWhatsapp!,
-            namaBank,
-            atasNamaRekening,
-            nomorRekening
+            rekening: {
+              create: {
+                namaBank,
+                atasNamaRekening,
+                nomorRekening
+              }
+            }
           }
         })
 
@@ -115,12 +118,10 @@ export class AuthService {
       include: { shelter: true }
     })
 
-    // 🟢 PERBAIKAN 3: Menggunakan ResponseError (401 Unauthorized) jika user tidak ditemukan
     if (!user) {
       throw new ResponseError(StatusCodes.UNAUTHORIZED, 'Email or password is incorrect')
     }
 
-    // 🟢 PERBAIKAN 4: Menggunakan ResponseError (401 Unauthorized) jika password salah
     const isValid = await BcryptUtil.comparePassword(password, user.password)
     if (!isValid) {
       throw new ResponseError(StatusCodes.UNAUTHORIZED, 'Email or password is incorrect')

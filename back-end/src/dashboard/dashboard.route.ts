@@ -1,9 +1,16 @@
 import { Router } from "express";
-import { DashboardController } from './dashboard.controler'
+import { DashboardController } from './dashboard.controler';
+import { AuthMiddleware } from "../middlewares/auth.middleware"; // Pastikan path benar
 
 const dashboardRouter = Router();
 
 // Endpoint: GET /api/v1/dashboard/stats
-dashboardRouter.get("/stats", DashboardController.getOverviewStats);
+// Kita tambahkan middleware agar hanya Admin/Super Admin yang bisa melihat data ini
+dashboardRouter.get(
+  "/stats", 
+  AuthMiddleware.authenticated(process.env.JWT_SECRET || "default_secret"), 
+  AuthMiddleware.authorized(['SHELTER', 'SUPER_ADMIN', 'DONATUR']), 
+  DashboardController.getOverviewStats
+);
 
 export default dashboardRouter;
