@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client-js"
-   output   = "../generated/prisma"
+  OUTPUT = "../generated/prisma"
 }
 
 datasource db {
@@ -20,29 +20,44 @@ model User {
   noWhatsapp  String?
   donasi      Donasi[]
   shelter     Shelter?
-  mailerLogs  MailerLog[] // 🟢 Relasi balik ke tabel logs
+  mailerLogs  MailerLog[] 
+  bookmarks   Bookmark[]  
 }
 
 model Shelter {
-  id               String   @id @default(uuid())
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  userId           String   @unique
-  alamatLengkap    String
-  atasNamaRekening String
-  deskripsi        String
-  fotoBanner       String?
-  isAktif          Boolean  @default(true)
-  kota             String
-  namaBank         String
-  namaShelter      String
-  noWhatsapp       String
-  nomorRekening    String
-  donasi           Donasi[]
-  satwa            Satwa[]
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String       @id @default(uuid())
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  deletedAt     DateTime?    
+  userId        String       @unique
+  alamatLengkap String
+  deskripsi     String
+  fotoBanner    String?
+  isAktif       Boolean      @default(true)
+  kota          String
+  namaShelter   String
+  noWhatsapp    String
+  donasi        Donasi[]
+  satwa         Satwa[]
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rekening      ShelterBank[] // 🟢 Tambahan: Relasi ke tabel bank baru (Tabel ke-7)
 }
 
+// 🟢 TABEL KE-7: Untuk memisahkan data rekening shelter 
+model ShelterBank {
+  id                String   @id @default(uuid())
+  shelterId         String   
+  namaBank          String
+  nomorRekening     String
+  atasNamaRekening  String
+  isPrimary         Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @default(now()) @updatedAt // 🟢 Tambahkan @default(now())
+  deletedAt         DateTime?
+
+  shelter           Shelter  @relation(fields: [shelterId], references: [id], onDelete: Cascade)
+  @@index([shelterId])
+}
 model Satwa {
   id            String       @id @default(uuid())
   shelterId     String
@@ -58,9 +73,23 @@ model Satwa {
   status        StatusSatwa  @default(TERSEDIA)
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
+  deletedAt     DateTime?    
   donasi        Donasi[]
   laporan       Laporan[]
   shelter       Shelter      @relation(fields: [shelterId], references: [id], onDelete: Cascade)
+  bookmarks     Bookmark[]   
+}
+
+
+model Bookmark {
+  id        String   @id @default(uuid())
+  userId    String
+  satwaId   String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  satwa     Satwa    @relation(fields: [satwaId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, satwaId]) 
 }
 
 model Donasi {
@@ -71,47 +100,32 @@ model Donasi {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   buktiResi      String
-  buktiResiPublicId String?    // store Cloudinary public_id for reliable deletes
+  buktiResiPublic String? 
   catatan        String?
   nominal        Int
+
   status         StatusDonasi @default(MENUNGGU)
   alasanDitolak  String?
   diverifikasiAt DateTime?
 
-  donatur User     @relation(fields: [donaturId], references: [id], onDelete: Restrict)
-  satwa   Satwa?   @relation(fields: [satwaId], references: [id], onDelete: SetNull)
-  shelter Shelter  @relation(fields: [shelterId], references: [id], onDelete: Restrict)
+  donatur User    @relation(fields: [donaturId], references: [id], onDelete: Restrict)
+  satwa   Satwa?  @relation(fields: [satwaId], references: [id], onDelete: SetNull)
+  shelter Shelter @relation(fields: [shelterId], references: [id], onDelete: Restrict)
 }
 
 model Laporan {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   satwaId   String
   judul     String
   deskripsi String
   foto      String?
-  fotoPublicId String?   // store Cloudinary public_id for reliable deletes
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  satwa     Satwa    @relation(fields: [satwaId], references: [id], onDelete: Cascade)
+  fotoPublicId String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? 
+  satwa     Satwa     @relation(fields: [satwaId], references: [id], onDelete: Cascade)
 }
 
-// Separate bank account table for Shelter to allow multiple accounts and auditing
-model Rekening {
-  id            String   @id @default(uuid())
-  shelterId     String
-  bankName      String
-  accountNumber String
-  accountHolder String
-  isPrimary     Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  deletedAt     DateTime?
-
-  shelter Shelter @relation(fields: [shelterId], references: [id], onDelete: Cascade)
-  @@index([shelterId])
-}
-
-// 🟢 MODEL BARU UNTUK AUDIT TRAIL EMAIL
 model MailerLog {
   id            String               @id @default(uuid())
   userId        String?              @map("user_id")
@@ -161,7 +175,6 @@ enum StatusDonasi {
   DITOLAK
 }
 
-// 🟢 ENUM PENDUKUNG MAILER LOG
 enum MailerLogType {
   donasi_berhasil
   donasi_gagal

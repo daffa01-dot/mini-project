@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { DonasiService } from "./donasi.service";
+import { CloudinaryUtil } from "../utils/cloudinaryutil"; // NEW: upload helper
 import { StatusCodes } from "http-status-codes";
 
 export class DonasiController {
@@ -40,12 +41,30 @@ export class DonasiController {
         });
       }
 
-      const buktiResiPath = file.path;
+      // NEW: Multer memoryStorage always provides a buffer for cloud upload
+      if (!((file as any).buffer instanceof Buffer)) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          success: false,
+          message: "File bukti resi harus diunggah menggunakan buffer memoryStorage",
+        });
+      }
+
+      let buktiResiPublicId: string | undefined = undefined;
+      let buktiResiPath: string;
+
+      try {
+        const uploaded = await CloudinaryUtil.uploadBufferWithMeta((file as any).buffer, 'bukti_resi');
+        buktiResiPath = uploaded.secureUrl;
+        buktiResiPublicId = uploaded.publicId;
+      } catch (err) {
+        return res.status(500).json({ success: false, message: 'Gagal upload bukti resi ke cloud' });
+      }
 
       const result = await DonasiService.uploadBuktiResi({
         donasiId,
         donaturId,
         buktiResiPath,
+        buktiResiPublicId,
       });
 
       return res.status(StatusCodes.OK).json({
@@ -85,12 +104,15 @@ export class DonasiController {
       const role = res.locals.payload?.role || (req as any).user?.role;
       const shelterId =
         res.locals.payload?.shelterId || (req as any).user?.shelterId;
+      const { page, perPage } = req.query;
+      const pageNumber = Number(page) || 1;
+      const perPageNumber = Number(perPage) || 10;
 
       let result;
 
       // Mengakomodasi SUPER_ADMIN dan ADMIN sesuai enum database
       if (role === "SUPER_ADMIN" || role === "ADMIN") {
-        result = await DonasiService.getRiwayatAdmin();
+        result = await DonasiService.getRiwayatAdmin(pageNumber, perPageNumber);
       } else if (role === "SHELTER") { // 🟢 Diubah dari MITRA_SHELTER menjadi SHELTER
         if (!shelterId) {
           return res.status(StatusCodes.BAD_REQUEST).json({
@@ -99,15 +121,16 @@ export class DonasiController {
               "Akun Mitra Shelter Anda tidak terikat dengan ID Shelter mana pun",
           });
         }
-        result = await DonasiService.getRiwayatShelter(shelterId);
+        result = await DonasiService.getRiwayatShelter(shelterId, pageNumber, perPageNumber);
       } else {
-        result = await DonasiService.getRiwayatDonatur(userId);
+        result = await DonasiService.getRiwayatDonatur(userId, pageNumber, perPageNumber);
       }
 
       return res.status(StatusCodes.OK).json({
         success: true,
         message: "Berhasil mengambil data riwayat donasi",
-        data: result,
+        data: result.data,
+        meta: result.meta,
       });
     } catch (error) {
       next(error);

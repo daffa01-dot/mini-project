@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { LaporanService } from './laporan.service';
+import { CloudinaryUtil } from '../utils/cloudinaryutil'; // NEW: for cloud uploads
 import { CreateLaporanSchema } from '../validation/laporan.validation';
 import { StatusCodes } from 'http-status-codes';
 
@@ -22,15 +23,31 @@ export class LaporanController {
       }
 
       // Ambil path penyimpanan lokal atau url cloud storage
-      const fotoUrl = file.path || file.url; 
+      let fotoUrl = file.path || file.url || null;
+      let fotoMeta: any = null; // NEW: include public_id when uploaded to cloud
+
+      // If Multer used memoryStorage (file.buffer present), upload to Cloudinary
+      if ((file as any).buffer) {
+        try {
+          const uploaded = await CloudinaryUtil.uploadBufferWithMeta((file as any).buffer, 'laporan_photos');
+          fotoUrl = uploaded.secureUrl;
+          fotoMeta = { publicId: uploaded.publicId, url: uploaded.secureUrl };
+        } catch (err) {
+          return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            message: 'Gagal mengunggah foto ke cloud storage',
+          });
+        }
+      }
 
       // Teruskan data ke layer service untuk diproses ke PostgreSQL via Prisma
       const result = await LaporanService.createLaporan({
         judul: validatedData.judul,
         deskripsi: validatedData.deskripsi,
-        satwaId: validatedData.satwaId, 
-        fotoUrl: fotoUrl, 
-        userPayload
+        satwaId: validatedData.satwaId,
+        fotoUrl: fotoUrl,
+        fotoPublicId: fotoMeta?.publicId, // NEW: store public_id when uploaded
+        userPayload,
       });
 
       return res.status(StatusCodes.CREATED).json({
@@ -58,7 +75,10 @@ export class LaporanController {
   static async getBySatwa(req: Request, res: Response, next: NextFunction) {
     try {
       const satwaId = Array.isArray(req.params.satwaId) ? req.params.satwaId[0] : req.params.satwaId;
-      
+      const { page, perPage } = req.query;
+      const pageNumber = Number(page) || 1;
+      const perPageNumber = Number(perPage) || 10;
+
       if (!satwaId) {
         return res.status(StatusCodes.BAD_REQUEST).json({
           success: false,
@@ -66,12 +86,13 @@ export class LaporanController {
         });
       }
 
-      const result = await LaporanService.getLaporanBySatwa(satwaId);
+      const result = await LaporanService.getLaporanBySatwa(satwaId, pageNumber, perPageNumber);
 
       return res.status(StatusCodes.OK).json({
         success: true,
         message: "Berhasil mengambil linimasa kabar satwa",
-        data: result
+        data: result.data,
+        meta: result.meta,
       });
     } catch (error) {
       next(error); // Teruskan ke Global Error Handler di app.ts

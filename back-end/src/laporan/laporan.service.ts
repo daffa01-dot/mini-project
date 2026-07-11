@@ -7,9 +7,10 @@ export class LaporanService {
     deskripsi: string;
     satwaId: string;
     fotoUrl: string;
+    fotoPublicId?: string; // NEW: accept cloud public_id
     userPayload: any;
   }) {
-    const { judul, deskripsi, satwaId, fotoUrl, userPayload } = data;
+    const { judul, deskripsi, satwaId, fotoUrl, fotoPublicId, userPayload } = data;
 
     // 1. Validasi apakah satwanya ada di DB
     const satwa = await (prisma as any).satwa.findUnique({
@@ -44,15 +45,37 @@ export class LaporanService {
         judul,
         deskripsi,
         foto: fotoUrl,
+        fotoPublicId: fotoPublicId || null, // NEW: store public_id when available
         satwaId,
       },
     });
   }
 
-  static async getLaporanBySatwa(satwaId: string) {
-    return await (prisma as any).laporan.findMany({
-      where: { satwaId },
+  static async getLaporanBySatwa(satwaId: string, page = 1, perPage = 10) {
+    const currentPage = Math.max(1, page);
+    const currentPerPage = Math.max(1, Math.min(perPage, 100));
+
+    const whereQuery = { satwaId };
+    const total = await (prisma as any).laporan.count({ where: whereQuery });
+    const laporan = await (prisma as any).laporan.findMany({
+      where: whereQuery,
       orderBy: { createdAt: "desc" },
+      skip: (currentPage - 1) * currentPerPage,
+      take: currentPerPage,
     });
+
+    const totalPages = currentPerPage > 0 ? Math.ceil(total / currentPerPage) : 0;
+
+    return {
+      data: laporan,
+      meta: {
+        total,
+        page: currentPage,
+        perPage: currentPerPage,
+        totalPages,
+        hasNextPage: currentPage < totalPages,
+        hasPrevPage: currentPage > 1,
+      },
+    };
   }
 }

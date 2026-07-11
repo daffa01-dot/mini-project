@@ -12,8 +12,8 @@ const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 // Panggil fungsi authenticated() dengan menyertakan secret key-nya
 const auth = AuthMiddleware.authenticated(JWT_SECRET);
 
-// 2. PERBAIKAN: Buat instansiasi khusus untuk donasi menggunakan 'diskStorage' dengan batas file 2MB
-const donasiUpload = new MulterMiddleware('diskStorage').upload(2 * 1024 * 1024);
+// 2. PERBAIKAN: Buat instansiasi khusus untuk donasi menggunakan 'memoryStorage' dengan batas file 2MB
+const donasiUpload = new MulterMiddleware('memoryStorage').upload(2 * 1024 * 1024);
 
 // =========================================================================
 // REGISTER ENDPOINTS
