@@ -9,7 +9,8 @@ export class ShelterService {
 
     // Build query dinamis untuk Prisma
     const whereQuery: any = {
-      isAktif: true, // Wajib aktif sesuai PRD halaman 4
+      isAktif: true,
+      deletedAt: null,
     };
 
     // Jika ada filter kota (e.g. ?kota=Jakarta)
@@ -49,12 +50,16 @@ export class ShelterService {
 
   // 2. GET DETAIL SHELTER BY ID (Include Daftar Satwa di Dalamnya)
   static async getShelterById(id: string) {
-    const shelter = await (prisma as any).shelter.findUnique({
-      where: { id },
+    const shelter = await prisma.shelter.findFirst({
+      where: {
+        id,
+        deletedAt: null,
+      },
       include: {
         satwa: {
           where: {
-            status: "TERSEDIA", // Hanya tampilkan satwa yang butuh asuh/adopsi
+            status: "TERSEDIA",
+            deletedAt: null,
           },
         },
       },
@@ -63,6 +68,7 @@ export class ShelterService {
     if (!shelter) {
       throw new ResponseError(StatusCodes.NOT_FOUND, "Shelter tidak ditemukan");
     }
+    
 
     return shelter;
   }

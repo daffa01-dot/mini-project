@@ -1,40 +1,48 @@
-import { Request } from 'express';
-import multer, { FileFilterCallback, Multer, StorageEngine } from 'multer';
-import path from 'path';
-import fs from 'fs';
-import { ResponseError } from '../utils/response-error.util'; // Pastikan path ini sesuai di project Anda
-import { StatusCodes } from 'http-status-codes';
+import { Request } from "express";
+import multer, { FileFilterCallback, Multer, StorageEngine } from "multer";
+import path from "path";
+import fs from "fs";
+import { ResponseError } from "../utils/response-error.util"; // Pastikan path ini sesuai di project Anda
+import { StatusCodes } from "http-status-codes";
+
+const storage = multer.memoryStorage();
+
+export const uploadImage = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+});
 
 export class MulterMiddleware {
-  private allowedExtensions: string[] = ['.jpg', '.jpeg', '.png'];
-  private storageType: 'diskStorage' | 'memoryStorage' = 'diskStorage';
-  private uploadDir = path.join(process.cwd(), 'public/uploads/resi');
+  private allowedExtensions: string[] = [".jpg", ".jpeg", ".png"];
+  private storageType: "diskStorage" | "memoryStorage" = "diskStorage";
+  private uploadDir = path.join(process.cwd(), "public/uploads/resi");
 
-  constructor(storageType?: 'diskStorage' | 'memoryStorage') {
+  constructor(storageType?: "diskStorage" | "memoryStorage") {
     if (storageType) {
       this.storageType = storageType;
     }
-    
+
     // Membuat folder otomatis jika memilih diskStorage dan folder belum ada
-    if (this.storageType === 'diskStorage' && !fs.existsSync(this.uploadDir)) {
+    if (this.storageType === "diskStorage" && !fs.existsSync(this.uploadDir)) {
       fs.mkdirSync(this.uploadDir, { recursive: true });
     }
   }
 
   private storage(): StorageEngine {
-    if (this.storageType === 'diskStorage') {
+    if (this.storageType === "diskStorage") {
       return multer.diskStorage({
         destination: (req: Request, file: Express.Multer.File, cb) => {
           cb(null, this.uploadDir);
         },
         filename: (req: Request, file: Express.Multer.File, cb) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const uniqueSuffix =
+            Date.now() + "-" + Math.round(Math.random() * 1e9);
           const fileExtension = path.extname(file.originalname);
           cb(null, `resi-${uniqueSuffix}${fileExtension}`);
         },
       });
     }
-    
+
     // Jika memoryStorage (untuk Cloudinary), langsung kembalikan tanpa setting destination/filename
     return multer.memoryStorage();
   }

@@ -1,31 +1,36 @@
-import { PrismaClient, Role } from '@prisma/client'
-import { BcryptUtil } from '../utils/bycrypt'
-import { JWTUtil } from '../utils/jwt'
-import { ResponseError } from '../utils/response-error.util'
-import { StatusCodes } from 'http-status-codes'
-import {
-  AuthLoginInput,
-  AuthRegisterInput,
-} from './auth.validation';
+import { PrismaClient, Role } from "@prisma/client";
+import { BcryptUtil } from "../utils/bycrypt";
+import { JWTUtil } from "../utils/jwt";
+import { ResponseError } from "../utils/response-error.util";
+import { StatusCodes } from "http-status-codes";
+import { AuthLoginInput, AuthRegisterInput } from "./auth.validation";
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
 export class AuthService {
-
   static async register({ body }: { body: AuthRegisterInput }) {
     const {
-      email, password, namaLengkap, noWhatsapp, role,
-      namaShelter, deskripsi, kota, alamatLengkap,
-      namaBank, atasNamaRekening, nomorRekening
-    } = body
+      email,
+      password,
+      namaLengkap,
+      noWhatsapp,
+      role,
+      namaShelter,
+      deskripsi,
+      kota,
+      alamatLengkap,
+      namaBank,
+      atasNamaRekening,
+      nomorRekening,
+    } = body;
 
     const existing = await prisma.user.findUnique({
-      where: { 
+      where: {
         email: body.email,
       },
     });
     if (existing) {
-      throw new ResponseError(StatusCodes.CONFLICT, 'Email already registered')
+      throw new ResponseError(StatusCodes.CONFLICT, "Email already registered");
     }
 
     const hashed = await BcryptUtil.hashPassword(body.password);
@@ -38,12 +43,12 @@ export class AuthService {
           password: hashed,
           namaLengkap,
           noWhatsapp: noWhatsapp ?? null,
-          role: Role.DONATUR
-        }
-      })
+          role: Role.DONATUR,
+        },
+      });
 
-      const { password: _, ...safeUser } = user
-      return safeUser
+      const { password: _, ...safeUser } = user;
+      return safeUser;
     }
 
     // ── ADMIN ─────────────────────────────────────────────────
@@ -53,18 +58,29 @@ export class AuthService {
           email,
           password: hashed,
           namaLengkap,
-          role: Role.SUPER_ADMIN
-        }
-      })
+          role: Role.SUPER_ADMIN,
+        },
+      });
 
-      const { password: _, ...safeUser } = user
-      return safeUser
+      const { password: _, ...safeUser } = user;
+      return safeUser;
     }
 
     // ── SHELTER ───────────────────────────────────────────────
     if (role === Role.SHELTER) {
-      if (!namaShelter || !deskripsi || !kota || !alamatLengkap || !namaBank || !atasNamaRekening || !nomorRekening) {
-        throw new ResponseError(StatusCodes.BAD_REQUEST, 'Semua data profil dan rekening shelter wajib diisi')
+      if (
+        !namaShelter ||
+        !deskripsi ||
+        !kota ||
+        !alamatLengkap ||
+        !namaBank ||
+        !atasNamaRekening ||
+        !nomorRekening
+      ) {
+        throw new ResponseError(
+          StatusCodes.BAD_REQUEST,
+          "Semua data profil dan rekening shelter wajib diisi",
+        );
       }
 
       const result = await prisma.$transaction(async (tx) => {
@@ -74,9 +90,9 @@ export class AuthService {
             password: hashed,
             namaLengkap,
             noWhatsapp: noWhatsapp ?? null,
-            role: Role.SHELTER
-          }
-        })
+            role: Role.SHELTER,
+          },
+        });
 
         // PERBAIKAN: Menggunakan nested write untuk relasi ShelterBank[cite: 2]
         const shelter = await tx.shelter.create({
@@ -91,52 +107,62 @@ export class AuthService {
               create: {
                 namaBank,
                 atasNamaRekening,
-                nomorRekening
-              }
-            }
-          }
-        })
+                nomorRekening,
+              },
+            },
+          },
+        });
 
-        const { password: _, ...safeUser } = user
-        return { ...safeUser, shelter }
-      })
+        const { password: _, ...safeUser } = user;
+        return { ...safeUser, shelter };
+      });
 
-      return result
+      return result;
     }
 
-    throw new ResponseError(StatusCodes.BAD_REQUEST, 'Invalid role')
+    throw new ResponseError(StatusCodes.BAD_REQUEST, "Invalid role");
   }
 
   // ============================================================
   // LOGIN
   // ============================================================
   static async login({ body }: { body: AuthLoginInput }) {
-    const { email, password } = body
+    const { email, password } = body;
 
-    const user = await prisma.user.findUnique({
-      where: { email },
-      include: { shelter: true }
-    })
-
+    const user = await prisma.user.findFirst({
+      where: {
+        email,
+        deletedAt: null,
+      },
+      include: {
+        shelter: true,
+      },
+    });
     if (!user) {
-      throw new ResponseError(StatusCodes.UNAUTHORIZED, 'Email or password is incorrect')
+      throw new ResponseError(
+        StatusCodes.UNAUTHORIZED,
+        "Email or password is incorrect",
+      );
     }
 
-    const isValid = await BcryptUtil.comparePassword(password, user.password)
+    const isValid = await BcryptUtil.comparePassword(password, user.password);
     if (!isValid) {
-      throw new ResponseError(StatusCodes.UNAUTHORIZED, 'Email or password is incorrect')
+      throw new ResponseError(
+        StatusCodes.UNAUTHORIZED,
+        "Email or password is incorrect",
+      );
     }
 
     const shelterId = user.shelter?.id || null;
-    
+
     const token = JWTUtil.signToken({
       id: user.id,
       email: user.email,
       role: user.role,
-      shelterId: shelterId 
+      shelterId: shelterId,
     } as any);
 
-    const { password: _, ...safeUser } = user
-    return { safeUser, token }
+    const { password: _, ...safeUser } = user;
+    return { safeUser, token };
   }
 }

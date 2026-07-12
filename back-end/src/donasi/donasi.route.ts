@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Request, Response,  NextFunction, Router } from "express";
 import { DonasiController } from "./donasi.controler";
 import { AuthMiddleware } from "../middlewares/auth.middleware";
 // 1. PERBAIKAN: Import MulterMiddleware berbentuk Class (bukan variabel 'upload' lagi)
@@ -45,9 +45,16 @@ router.patch(
 );
 
 // PERBAIKAN DI SINI: Tambahkan 'auth' agar token donatur diekstrak sebelum ditarik datanya
-router.get("/riwayat", auth, (req, res, next) => {
+router.get("/riwayat", auth, (req: Request, res: Response, next: NextFunction) => {
     console.log("MASUK KE ROUTE RIWAYAT");
     next();
 }, DonasiController.getRiwayat);
+
+router.delete(
+  "/:donasiId",
+  auth,
+  authorizeShelterOrAdmin,
+  DonasiController.deleteDonasi
+);
 
 export default router;

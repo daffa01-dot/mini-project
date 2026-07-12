@@ -1,23 +1,46 @@
 import { Router } from "express";
-import { SatwaController } from "./satwa.controler";
+import {
+  getAll,
+  getById,
+  remove,
+  SatwaController,
+  update,
+} from "./satwa.controler";
 import { AuthMiddleware } from "../middlewares/auth.middleware";
 import { Role } from "@prisma/client";
-
-// 1. GANTI IMPORT INI: Ambil MulterMiddleware (bukan upload)
-import { MulterMiddleware } from "../middlewares/multerMiddleware"; 
+import { uploadImage } from "../middlewares/multerMiddleware";
 
 const router = Router();
 
-// 2. BUAT INSTANCE BARU: Set ke memoryStorage untuk Cloudinary dengan limit 5MB
-const satwaUpload = new MulterMiddleware('memoryStorage').upload(5 * 1024 * 1024);
+router.get("/", getAll);
+router.get("/:id", getById);
+
+// Route: POST /api/v1/hewan
+// 1. Cek Token -> 2. Cek Role -> 3. Tangkap File 'foto' -> 4. Jalankan Controller
 
 router.post(
   "/",
+  // verifyToken,
+  // checkRole([Role.SHELTER]),
   AuthMiddleware.authenticated(""),
   AuthMiddleware.authorized([Role.SHELTER]),
-  // 3. GANTI DI SINI: Gunakan variabel satwaUpload yang baru dibuat
-  satwaUpload.single("foto"), 
+  uploadImage.single("foto"),
   SatwaController.createSatwa,
+);
+
+router.put(
+  "/:id",
+  AuthMiddleware.authenticated(""),
+  AuthMiddleware.authorized([Role.SHELTER]),
+  uploadImage.single("foto"),
+  update,
+);
+
+router.delete(
+  "/:id",
+  AuthMiddleware.authenticated(""),
+  AuthMiddleware.authorized([Role.SHELTER]),
+  remove,
 );
 
 export default router;

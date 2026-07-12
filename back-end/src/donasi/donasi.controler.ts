@@ -1,6 +1,13 @@
 import { NextFunction, Request, Response } from "express";
 import { DonasiService } from "./donasi.service";
 import { StatusCodes } from "http-status-codes";
+import prisma from "../configs/prisma-client.config";
+
+type GetRiwayatProps = {
+  role: string;
+  userId?: string;
+  shelterId?: string;
+};
 
 export class DonasiController {
   static async checkout(req: Request, res: Response, next: NextFunction) {
@@ -79,34 +86,61 @@ export class DonasiController {
     }
   }
 
-  static async getRiwayat(req: Request, res: Response, next: NextFunction) {
+  static async getRiwayat({ role, userId, shelterId }: GetRiwayatProps) {
+    const where: any = {
+      deletedAt: null,
+    };
+
+    if (role === "DONATUR") {
+      where.donaturId = userId;
+    }
+
+    if (role === "SHELTER") {
+      where.shelterId = shelterId;
+    }
+
+    return await prisma.donasi.findMany({
+      where,
+      include: {
+        donatur: {
+          select: {
+            namaLengkap: true,
+            email: true,
+          },
+        },
+        shelter: {
+          select: {
+            namaShelter: true,
+          },
+        },
+        satwa: {
+          select: {
+            nama: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+  }
+  static async deleteDonasi(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = res.locals.payload?.id || (req as any).user?.id;
-      const role = res.locals.payload?.role || (req as any).user?.role;
-      const shelterId =
-        res.locals.payload?.shelterId || (req as any).user?.shelterId;
+      let donasiId = req.params.donasiId;
 
-      let result;
-
-      // Mengakomodasi SUPER_ADMIN dan ADMIN sesuai enum database
-      if (role === "SUPER_ADMIN" || role === "ADMIN") {
-        result = await DonasiService.getRiwayatAdmin();
-      } else if (role === "SHELTER") { // 🟢 Diubah dari MITRA_SHELTER menjadi SHELTER
-        if (!shelterId) {
-          return res.status(StatusCodes.BAD_REQUEST).json({
-            success: false,
-            message:
-              "Akun Mitra Shelter Anda tidak terikat dengan ID Shelter mana pun",
-          });
-        }
-        result = await DonasiService.getRiwayatShelter(shelterId);
-      } else {
-        result = await DonasiService.getRiwayatDonatur(userId);
+      if (!donasiId || Array.isArray(donasiId)) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          success: false,
+          message: "Parameter donasiId tidak valid",
+        });
       }
 
-      return res.status(StatusCodes.OK).json({
+      // Pastikan fungsi ini memanggil service yang kita buat sebelumnya
+      const result = await DonasiService.deleteDonasi(donasiId);
+
+      res.status(StatusCodes.OK).json({
         success: true,
-        message: "Berhasil mengambil data riwayat donasi",
+        message: "Donasi berhasil dihapus",
         data: result,
       });
     } catch (error) {

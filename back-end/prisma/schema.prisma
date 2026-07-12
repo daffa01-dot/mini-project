@@ -32,6 +32,7 @@ model Shelter {
   deletedAt     DateTime?    
   userId        String       @unique
   alamatLengkap String
+  status         Status @default(MENUNGGU)
   deskripsi     String
   fotoBanner    String?
   isAktif       Boolean      @default(true)
@@ -100,7 +101,7 @@ model Donasi {
   buktiResi      String
   catatan        String?
   nominal        Int
-  status         StatusDonasi @default(MENUNGGU)
+  status         Status @default(MENUNGGU)
   alasanDitolak  String?
   diverifikasiAt DateTime?
 
@@ -164,7 +165,7 @@ enum StatusSatwa {
   TIDAK_AKTIF
 }
 
-enum StatusDonasi {
+enum Status{
   MENUNGGU
   DIVERIFIKASI
   DITOLAK
