@@ -3,6 +3,7 @@ import { LaporanService } from './laporan.service';
 import { CreateLaporanSchema } from '../validation/laporan.validation';
 import { StatusCodes } from 'http-status-codes';
 
+
 export class LaporanController {
   static async create(req: Request, res: Response, next: NextFunction) {
     try {
@@ -77,4 +78,84 @@ export class LaporanController {
       next(error); // Teruskan ke Global Error Handler di app.ts
     }
   }
+  static async getDetail(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const id = req.params.id;
+
+    const result = await LaporanService.getDetail( id as string);
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Detail laporan berhasil diambil.",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+static async update(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const id = req.params.id;
+
+    const userPayload =
+      res.locals.payload ||
+      res.locals.user ||
+      (req as any).user;
+
+    const file = (req as any).file;
+
+    const result = await LaporanService.updateLaporan({
+      laporanId: id as string,
+      judul: req.body.judul,
+      deskripsi: req.body.deskripsi,
+      fotoUrl: file?.path || file?.url,
+      userPayload,
+    });
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Laporan berhasil diperbarui.",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+static async delete(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+
+    const id = req.params.id;
+
+    const userPayload =
+      res.locals.payload ||
+      res.locals.user ||
+      (req as any).user;
+
+    const result = await LaporanService.deleteLaporan(
+      id as string,
+      userPayload,
+    );
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Laporan berhasil dihapus.",
+      data: result,
+    });
+
+  } catch (error) {
+    next(error);
+  }
+}
 }

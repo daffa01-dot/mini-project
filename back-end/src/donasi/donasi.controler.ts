@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { DonasiService } from "./donasi.service";
 import { StatusCodes } from "http-status-codes";
-import prisma from "../configs/prisma-client.config";
+
 
 type GetRiwayatProps = {
   role: string;
@@ -86,44 +86,26 @@ export class DonasiController {
     }
   }
 
-  static async getRiwayat({ role, userId, shelterId }: GetRiwayatProps) {
-    const where: any = {
-      deletedAt: null,
-    };
+  static async getRiwayat(req: Request, res: Response, next: NextFunction) {
+    try {
+      const payload = res.locals.payload;
 
-    if (role === "DONATUR") {
-      where.donaturId = userId;
+      const result = await DonasiService.getRiwayat({
+        role: payload.role,
+        userId: payload.id,
+        shelterId: payload.shelterId,
+      });
+
+      return res.status(StatusCodes.OK).json({
+        success: true,
+        message: "Riwayat donasi berhasil diambil.",
+        data: result,
+      });
+    } catch (error) {
+      next(error);
     }
-
-    if (role === "SHELTER") {
-      where.shelterId = shelterId;
-    }
-
-    return await prisma.donasi.findMany({
-      where,
-      include: {
-        donatur: {
-          select: {
-            namaLengkap: true,
-            email: true,
-          },
-        },
-        shelter: {
-          select: {
-            namaShelter: true,
-          },
-        },
-        satwa: {
-          select: {
-            nama: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
   }
+
   static async deleteDonasi(req: Request, res: Response, next: NextFunction) {
     try {
       let donasiId = req.params.donasiId;

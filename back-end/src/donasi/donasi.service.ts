@@ -212,8 +212,7 @@ export class DonasiService {
         },
       });
       if (statusBaru === "DIVERIFIKASI") {
-        const nominalDonasi =
-          updatedDonasi?.nominal || updatedDonasi?.buktiResi || 0;
+        const nominalDonasi = updatedDonasi?.nominal;
 
         if (updatedDonasi.satwaId) {
           const satwa = await tx.satwa.findFirst({
