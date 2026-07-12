@@ -1,19 +1,25 @@
 import { Router } from "express";
 import { DonaturController } from './donatur.controller'
 import { Role } from "@prisma/client";
-
-// 1. PERBAIKI IMPORT: Ambil AuthMiddleware, bukan fungsi verifyToken/checkRole
-import { AuthMiddleware } from "../middlewares/auth.middleware"; 
+import { AuthMiddleware } from "../middlewares/auth.middleware";
+import favoritesRouter from "../favorites/favorites.route";
 
 const donaturRouter = Router();
-const authMiddleware = new AuthMiddleware();
+const secretKey = process.env.JWT_SECRET_KEY || "";
+const auth = AuthMiddleware.authenticated(secretKey);
 
-// Contoh endpoint profile di dalam router donatur Anda
 donaturRouter.get(
   "/profile",
-  AuthMiddleware.authenticated.bind(authMiddleware),
+  auth,
   AuthMiddleware.authorized([Role.DONATUR]),
-  DonaturController.getProfile
+  DonaturController.getProfile,
+);
+
+donaturRouter.use(
+  "/favorites",
+  auth,
+  AuthMiddleware.authorized([Role.DONATUR]),
+  favoritesRouter,
 );
 
 export default donaturRouter;

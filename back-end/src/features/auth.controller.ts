@@ -78,8 +78,8 @@ export class AuthController {
       // Menghapus cookie bernama 'token' yang dikirimkan saat login tadi
       res.clearCookie('token', {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'Mini-Project',
-        sameSite: 'strict'
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
       })
 
       return res.status(StatusCodes.OK).json({

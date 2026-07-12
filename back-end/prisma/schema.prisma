@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client-js"
-  OUTPUT = "../generated/prisma"
+  OUTPUT   = "../generated/prisma"
 }
 
 datasource db {
@@ -10,56 +10,56 @@ datasource db {
 }
 
 model User {
-  id          String      @id @default(uuid())
-  email       String      @unique
-  password    String
-  role        Role        @default(DONATUR)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  namaLengkap String
-  noWhatsapp  String?
-  donasi      Donasi[]
-  shelter     Shelter?
-  mailerLogs  MailerLog[] 
-  bookmarks   Bookmark[]  
+  id               String            @id @default(uuid())
+  email            String            @unique
+  password         String
+  role             Role              @default(DONATUR)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  namaLengkap      String
+  noWhatsapp       String?
+  donasi           Donasi[]
+  shelter          Shelter?
+  mailerLogs       MailerLog[]
+  satwaBookmarks   SatwaBookmark[]
+  shelterBookmarks ShelterBookmark[]
 }
-
 model Shelter {
-  id            String       @id @default(uuid())
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  deletedAt     DateTime?    
-  userId        String       @unique
-  alamatLengkap String
-  deskripsi     String
-  fotoBanner    String?
-  isAktif       Boolean      @default(true)
-  kota          String
-  namaShelter   String
-  noWhatsapp    String
-  donasi        Donasi[]
-  satwa         Satwa[]
-  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  rekening      ShelterBank[] // 🟢 Tambahan: Relasi ke tabel bank baru (Tabel ke-7)
-}
-
-// 🟢 TABEL KE-7: Untuk memisahkan data rekening shelter 
+  id               String            @id @default(uuid())
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  deletedAt        DateTime?
+  userId           String            @unique
+  alamatLengkap    String
+  deskripsi        String
+  fotoBanner       String?
+  isAktif          Boolean           @default(true)
+  kota             String
+  namaShelter      String
+  noWhatsapp       String
+  donasi           Donasi[]
+  satwa            Satwa[]
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rekening         ShelterBank[]
+  bookmarks        ShelterBookmark[]
+}   
 model ShelterBank {
-  id                String   @id @default(uuid())
-  shelterId         String   
-  namaBank          String
-  nomorRekening     String
-  atasNamaRekening  String
-  isPrimary         Boolean  @default(false)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @default(now()) @updatedAt // 🟢 Tambahkan @default(now())
-  deletedAt         DateTime?
+  id               String    @id @default(uuid())
+  shelterId        String
+  namaBank         String
+  nomorRekening    String
+  atasNamaRekening String
+  isPrimary        Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @default(now()) @updatedAt
+  deletedAt        DateTime?
+  shelter          Shelter   @relation(fields: [shelterId], references: [id], onDelete: Cascade)
 
-  shelter           Shelter  @relation(fields: [shelterId], references: [id], onDelete: Cascade)
   @@index([shelterId])
 }
+
 model Satwa {
-  id            String       @id @default(uuid())
+  id            String          @id @default(uuid())
   shelterId     String
   nama          String
   jenis         JenisSatwa
@@ -69,61 +69,47 @@ model Satwa {
   foto          String?
   deskripsi     String?
   riwayatMedis  String?
-  danaTerkumpul Int          @default(0)
-  status        StatusSatwa  @default(TERSEDIA)
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  deletedAt     DateTime?    
+  danaTerkumpul Int             @default(0)
+  status        StatusSatwa     @default(TERSEDIA)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  deletedAt     DateTime?
   donasi        Donasi[]
   laporan       Laporan[]
-  shelter       Shelter      @relation(fields: [shelterId], references: [id], onDelete: Cascade)
-  bookmarks     Bookmark[]   
-}
-
-
-model Bookmark {
-  id        String   @id @default(uuid())
-  userId    String
-  satwaId   String
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  satwa     Satwa    @relation(fields: [satwaId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, satwaId]) 
+  shelter       Shelter         @relation(fields: [shelterId], references: [id], onDelete: Cascade)
+  bookmarks     SatwaBookmark[]
 }
 
 model Donasi {
-  id             String       @id @default(uuid())
-  donaturId      String
-  satwaId        String?
-  shelterId      String
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  buktiResi      String
-  buktiResiPublic String? 
-  catatan        String?
-  nominal        Int
-
-  status         StatusDonasi @default(MENUNGGU)
-  alasanDitolak  String?
-  diverifikasiAt DateTime?
-
-  donatur User    @relation(fields: [donaturId], references: [id], onDelete: Restrict)
-  satwa   Satwa?  @relation(fields: [satwaId], references: [id], onDelete: SetNull)
-  shelter Shelter @relation(fields: [shelterId], references: [id], onDelete: Restrict)
+  id              String       @id @default(uuid())
+  donaturId       String
+  satwaId         String?
+  shelterId       String
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  buktiResi       String
+  buktiResiPublic String?
+  catatan         String?
+  nominal         Int
+  status          StatusDonasi @default(MENUNGGU)
+  alasanDitolak   String?
+  diverifikasiAt  DateTime?
+  donatur         User         @relation(fields: [donaturId], references: [id])
+  satwa           Satwa?       @relation(fields: [satwaId], references: [id])
+  shelter         Shelter      @relation(fields: [shelterId], references: [id])
 }
 
 model Laporan {
-  id        String    @id @default(uuid())
-  satwaId   String
-  judul     String
-  deskripsi String
-  foto      String?
+  id           String    @id @default(uuid())
+  satwaId      String
+  judul        String
+  deskripsi    String
+  foto         String?
   fotoPublicId String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime? 
-  satwa     Satwa     @relation(fields: [satwaId], references: [id], onDelete: Cascade)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+  satwa        Satwa     @relation(fields: [satwaId], references: [id], onDelete: Cascade)
 }
 
 model MailerLog {
@@ -144,6 +130,29 @@ model MailerLog {
   user          User?                @relation(fields: [userId], references: [id])
 
   @@map("mailer_logs")
+}
+
+model SatwaBookmark {
+  id        String   @id @default(uuid())
+  userId    String
+  satwaId   String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  satwa     Satwa    @relation(fields: [satwaId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, satwaId])
+  @@map("Bookmark") 
+}
+
+model ShelterBookmark {
+  id        String   @id @default(uuid())
+  userId    String
+  shelterId String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shelter   Shelter  @relation(fields: [shelterId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, shelterId])
 }
 
 enum Role {
