@@ -1,18 +1,21 @@
-import { Router } from "express";
+import { Request, Response, NextFunction, Router } from "express";
 import { DonasiController } from "./donasi.controler";
 import { AuthMiddleware } from "../middlewares/auth.middleware";
-// 1. PERBAIKAN: Import MulterMiddleware berbentuk Class (bukan variabel 'upload' lagi)
 import { MulterMiddleware } from "../middlewares/multerMiddleware";
 
 const router = Router();
 
-// Ambil secret key dari file .env proyek Anda (atau sesuaikan dengan string JWT secret Anda)
+// Ambil secret key dari file .env proyek Anda
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
-// Panggil fungsi authenticated() dengan menyertakan secret key-nya
+// Panggil fungsi authenticated
 const auth = AuthMiddleware.authenticated(JWT_SECRET);
 
-// 2. PERBAIKAN: Buat instansiasi khusus untuk donasi menggunakan 'memoryStorage' dengan batas file 2MB
+// RBAC: Ambil middleware otorisasi role
+// Sesuaikan dengan nama method di class AuthMiddleware Anda (e.g., authorized, authorize)
+const authorizeShelterOrAdmin = AuthMiddleware.authorized(["SUPER_ADMIN", "SHELTER"]);
+
+// File Upload: Harus 'memoryStorage' untuk Cloudinary
 const donasiUpload = new MulterMiddleware('memoryStorage').upload(2 * 1024 * 1024);
 
 // =========================================================================
@@ -21,19 +24,31 @@ const donasiUpload = new MulterMiddleware('memoryStorage').upload(2 * 1024 * 102
 
 router.post("/checkout", auth, DonasiController.checkout);
 
-// Endpoint 2: Upload Bukti (Hanya user yang sudah login/authenticated)
 router.patch(
   "/:donasiId/upload-bukti",
   auth,
-  // 3. PERBAIKAN: Ganti variabel lama 'upload' menjadi 'donasiUpload'
   donasiUpload.single("buktiResi"),
-  DonasiController.uploadBukti,
+  DonasiController.uploadBukti
 );
 
-// Endpoint 3: Verifikasi (Hanya user yang login)
-router.patch("/:donasiId/verifikasi", auth, DonasiController.verifikasi);
+router.patch(
+  "/:donasiId/verifikasi", 
+  auth, 
+  authorizeShelterOrAdmin, 
+  DonasiController.verifikasi
+);
 
-// PERBAIKAN DI SINI: Tambahkan 'auth' agar token donatur diekstrak sebelum ditarik datanya
-router.get("/riwayat", auth, DonasiController.getRiwayat);
+router.get("/riwayat", auth, (req: Request, res: Response, next: NextFunction) => {
+    // Middleware logging opsional sebelum masuk controller
+    console.log("MASUK KE ROUTE RIWAYAT");
+    next();
+}, DonasiController.getRiwayat);
+
+router.delete(
+  "/:donasiId",
+  auth,
+  authorizeShelterOrAdmin,
+  DonasiController.deleteDonasi
+);
 
 export default router;

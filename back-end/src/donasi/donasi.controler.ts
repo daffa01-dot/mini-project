@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { DonasiService } from "./donasi.service";
-import { CloudinaryUtil } from "../utils/cloudinaryutil"; // NEW: upload helper
+import { CloudinaryUtil } from "../utils/cloudinaryutil";
 import { StatusCodes } from "http-status-codes";
 
 export class DonasiController {
@@ -41,7 +41,7 @@ export class DonasiController {
         });
       }
 
-      // NEW: Multer memoryStorage always provides a buffer for cloud upload
+      // Multer memoryStorage always provides a buffer for cloud upload
       if (!((file as any).buffer instanceof Buffer)) {
         return res.status(StatusCodes.BAD_REQUEST).json({
           success: false,
@@ -102,35 +102,47 @@ export class DonasiController {
     try {
       const userId = res.locals.payload?.id || (req as any).user?.id;
       const role = res.locals.payload?.role || (req as any).user?.role;
-      const shelterId =
-        res.locals.payload?.shelterId || (req as any).user?.shelterId;
-      const { page, perPage } = req.query;
-      const pageNumber = Number(page) || 1;
-      const perPageNumber = Number(perPage) || 10;
+      const shelterId = res.locals.payload?.shelterId || (req as any).user?.shelterId;
+      
+      const page = Number(req.query.page) || 1;
+      const perPage = Number(req.query.perPage) || 10;
 
-      let result;
-
-      // Mengakomodasi SUPER_ADMIN dan ADMIN sesuai enum database
-      if (role === "SUPER_ADMIN" || role === "ADMIN") {
-        result = await DonasiService.getRiwayatAdmin(pageNumber, perPageNumber);
-      } else if (role === "SHELTER") { // 🟢 Diubah dari MITRA_SHELTER menjadi SHELTER
-        if (!shelterId) {
-          return res.status(StatusCodes.BAD_REQUEST).json({
-            success: false,
-            message:
-              "Akun Mitra Shelter Anda tidak terikat dengan ID Shelter mana pun",
-          });
-        }
-        result = await DonasiService.getRiwayatShelter(shelterId, pageNumber, perPageNumber);
-      } else {
-        result = await DonasiService.getRiwayatDonatur(userId, pageNumber, perPageNumber);
-      }
+      const result = await DonasiService.getRiwayat({
+        role,
+        userId,
+        shelterId,
+        page,
+        perPage,
+      });
 
       return res.status(StatusCodes.OK).json({
         success: true,
         message: "Berhasil mengambil data riwayat donasi",
         data: result.data,
         meta: result.meta,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async deleteDonasi(req: Request, res: Response, next: NextFunction) {
+    try {
+      const donasiId = req.params.donasiId;
+
+      if (!donasiId || Array.isArray(donasiId)) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          success: false,
+          message: "Parameter donasiId tidak valid",
+        });
+      }
+
+      const result = await DonasiService.deleteDonasi(donasiId);
+
+      res.status(StatusCodes.OK).json({
+        success: true,
+        message: "Donasi berhasil dihapus",
+        data: result,
       });
     } catch (error) {
       next(error);

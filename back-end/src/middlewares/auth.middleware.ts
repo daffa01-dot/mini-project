@@ -12,6 +12,7 @@ export class AuthMiddleware {
     // Kita WAJIB me-return fungsi middleware asli (req, res, next)
     return (req: Request, res: Response, next: NextFunction) => {
       try {
+        console.log("DEBUG URL:", req.originalUrl); // 🟢 TAMBAHKAN INI
         let token = null;
 
         const authHeader = req.headers.authorization;
@@ -31,6 +32,7 @@ export class AuthMiddleware {
         // Jika JWTUtil Anda butuh secretKey, tulis: JWTUtil.verifyToken(token, secretKey)
         // Jika JWTUtil Anda hanya menerima 1 argumen (token), tulis seperti di bawah:
         const payload = JWTUtil.verifyToken(token); 
+        console.log("PAYLOAD JWT:", payload);
 
         res.locals.payload = payload;
         next();

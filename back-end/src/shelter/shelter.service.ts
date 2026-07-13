@@ -89,12 +89,13 @@ export class ShelterService {
 
   // 2. GET DETAIL SHELTER BY ID (Include Daftar Satwa yang berstatus TERSEDIA)
   static async getShelterById(id: string) {
-    const shelter = await prisma.shelter.findUnique({
+    const shelter = await (prisma as any).shelter.findUnique({
       where: { id },
       include: {
         satwa: {
           where: {
             status: "TERSEDIA", 
+            deteletedAt: null,
           },
         },
       },
@@ -103,6 +104,7 @@ export class ShelterService {
     if (!shelter) {
       throw new ResponseError(StatusCodes.NOT_FOUND, "Shelter tidak ditemukan");
     }
+    
 
     return shelter;
   }
@@ -194,3 +196,4 @@ export class ShelterService {
     });
   }
 }
+

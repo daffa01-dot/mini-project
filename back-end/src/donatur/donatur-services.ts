@@ -76,4 +76,20 @@ export class DonaturService {
 
     return user
   }
+  static async getStats(userId: string) {
+  // Menghitung statistik donasi user berdasarkan donaturId
+  const stats = await prisma.donasi.aggregate({
+    where: { 
+      donaturId: userId,
+      status: "DIVERIFIKASI" // Hanya hitung yang sudah diverifikasi agar akurat
+    },
+    _sum: { nominal: true },
+    _count: { id: true },
+  });
+
+  return {
+    totalNominal: stats._sum.nominal || 0,
+    totalTransaksi: stats._count.id || 0
+  };
+}
 }
