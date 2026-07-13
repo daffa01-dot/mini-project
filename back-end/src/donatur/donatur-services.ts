@@ -9,10 +9,10 @@ const prisma = new PrismaClient()
 const SALT_ROUNDS = 10
 
 export class DonaturService {
-  // Terima parameter berupa object { body }
+
   static async register({ body }: { body: any }) {
     
-    // Validasi langsung menggunakan data { body } yang dikirim dari controller
+
     const validatedData = DonaturValidation.REGISTER.parse({ body });
     const { email, password, namaLengkap, noWhatsapp } = validatedData.body;
 
@@ -37,7 +37,7 @@ export class DonaturService {
     return safeUser
   }
 
-  // Terapkan hal yang sama pada fungsi login
+
   static async login({ body }: { body: any }) {
     const validatedData = DonaturValidation.LOGIN.parse({ body });
     const { email, password } = validatedData.body;
@@ -76,4 +76,20 @@ export class DonaturService {
 
     return user
   }
+  static async getStats(userId: string) {
+
+  const stats = await prisma.donasi.aggregate({
+    where: { 
+      donaturId: userId,
+      status: "DIVERIFIKASI" 
+    },
+    _sum: { nominal: true },
+    _count: { id: true },
+  });
+
+  return {
+    totalNominal: stats._sum.nominal || 0,
+    totalTransaksi: stats._count.id || 0
+  };
+}
 }
