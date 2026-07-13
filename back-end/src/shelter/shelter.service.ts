@@ -95,7 +95,7 @@ export class ShelterService {
         satwa: {
           where: {
             status: "TERSEDIA", 
-            deteletedAt: null,
+            deletedAt: null,
           },
         },
       },
@@ -175,7 +175,6 @@ export class ShelterService {
         namaBank: payload.namaBank,
         nomorRekening: payload.nomorRekening,
         atasNamaRekening: payload.atasNamaRekening,
-        isPrimary: payload.isPrimary ?? bank.isPrimary,
       },
     });
   }

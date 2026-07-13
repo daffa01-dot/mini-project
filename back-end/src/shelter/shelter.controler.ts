@@ -4,7 +4,6 @@ import { StatusCodes } from "http-status-codes";
 
 export class ShelterController {
   // Handler untuk list shelter
-  // Handler untuk list shelter
   static async getList(req: Request, res: Response, next: NextFunction) {
     try {
       const { search, kota, page, perPage } = req.query;
