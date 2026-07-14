@@ -1,46 +1,38 @@
 import { Router } from "express";
-import {
-  getAll,
-  getById,
-  remove,
-  SatwaController,
-  update,
-} from "./satwa.controler";
+import { SatwaController } from "../satwa/satwa.controller"; 
 import { AuthMiddleware } from "../middlewares/auth.middleware";
 import { Role } from "@prisma/client";
 import { uploadImage } from "../middlewares/multerMiddleware";
 
+const secretKey = process.env.JWT_SECRET_KEY || "secret_super_aman";
 const router = Router();
 
-router.get("/", getAll);
-router.get("/:id", getById);
+// Endpoint Publik (Semua orang bisa melihat daftar hewan)
+router.get("/", SatwaController.getAll);
+router.get("/:id", SatwaController.getById);
 
-// Route: POST /api/v1/hewan
-// 1. Cek Token -> 2. Cek Role -> 3. Tangkap File 'foto' -> 4. Jalankan Controller
-
+// Endpoint Privat (Hanya Shelter yang login yang bisa menambah/mengubah hewan)
 router.post(
   "/",
-  // verifyToken,
-  // checkRole([Role.SHELTER]),
-  AuthMiddleware.authenticated(""),
+  AuthMiddleware.authenticated(secretKey),
   AuthMiddleware.authorized([Role.SHELTER]),
   uploadImage.single("foto"),
-  SatwaController.createSatwa,
+  SatwaController.createSatwa
 );
 
 router.put(
   "/:id",
-  AuthMiddleware.authenticated(""),
+  AuthMiddleware.authenticated(secretKey),
   AuthMiddleware.authorized([Role.SHELTER]),
   uploadImage.single("foto"),
-  update,
+  SatwaController.update
 );
 
 router.delete(
   "/:id",
-  AuthMiddleware.authenticated(""),
+  AuthMiddleware.authenticated(secretKey),
   AuthMiddleware.authorized([Role.SHELTER]),
-  remove,
+  SatwaController.remove
 );
 
 export default router;

@@ -54,6 +54,7 @@ model ShelterBank {
   atasNamaRekening  String
   createdAt         DateTime @default(now())
   updatedAt         DateTime @default(now()) @updatedAt
+  deletedAt         DateTime?
   shelter           Shelter  @relation(fields: [shelterId], references: [id], onDelete: Cascade)
 }
 
@@ -86,13 +87,13 @@ model Donasi {
   shelterId      String
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
+  deletedAt      DateTime?
   buktiResi      String
   catatan        String?
   nominal        Int
   status         Status        @default(MENUNGGU)
   alasanDitolak  String?
   diverifikasiAt DateTime?
-
   donatur User     @relation(fields: [donaturId], references: [id], onDelete: Restrict)
   satwa   Satwa?   @relation(fields: [satwaId], references: [id], onDelete: SetNull)
   shelter Shelter  @relation(fields: [shelterId], references: [id], onDelete: Restrict)
@@ -122,7 +123,7 @@ model MailerLog {
   errorMessage  String?              @map("error_message")
   createdAt     DateTime             @default(now()) @map("created_at")
   updatedAt     DateTime             @updatedAt @map("updated_at")
-  deleted_at    DateTime?
+  deletedAt    DateTime?
   type          MailerLogType
   referenceType MailerReferenceType? @map("reference_type")
   status        MailerStatus         @default(pending)

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction, Router } from "express";
-import { DonasiController } from "./donasi.controler";
+import { DonasiController } from "./donasi.controller";
 import { AuthMiddleware } from "../middlewares/auth.middleware";
 // 1. PERBAIKAN: Import MulterMiddleware berbentuk Class (bukan variabel 'upload' lagi)
 import { MulterMiddleware } from "../middlewares/multerMiddleware";

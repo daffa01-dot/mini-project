@@ -1,5 +1,5 @@
 import prisma from "../configs/prisma-client.config";
-import { StatusDonasi } from "@prisma/client";
+import { Status } from "@prisma/client";
 
 export class DashboardService {
   
@@ -25,7 +25,7 @@ export class DashboardService {
     const [totalDonasiResult, totalSatwaTerbantu, totalMitraAktif] = await Promise.all([
       prisma.donasi.aggregate({ 
         _sum: { nominal: true }, 
-        where: { status: StatusDonasi.DIVERIFIKASI, ...filter } 
+        where: { status: Status.DIVERIFIKASI, ...filter } 
       }),
       prisma.satwa.count({ 
         where: { status: { in: ["TERSEDIA", "DIADOPSI"] }, ...filter } 
@@ -49,7 +49,7 @@ export class DashboardService {
       _sum: { nominal: true },
       where: { 
         shelterId: shelterId, 
-        status: StatusDonasi.DIVERIFIKASI,
+        status: Status.DIVERIFIKASI,
         ...filter
       },
     });
@@ -66,7 +66,7 @@ export class DashboardService {
       _sum: { nominal: true },
       where: { 
         donaturId: donaturId, 
-        status: StatusDonasi.DIVERIFIKASI,
+        status: Status.DIVERIFIKASI,
         ...filter
       },
     });

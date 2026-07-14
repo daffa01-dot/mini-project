@@ -1,7 +1,6 @@
 import express, { NextFunction, Request, Response } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import path from "path";
 import { StatusCodes } from "http-status-codes";
 import authRoute from "./features/auth.route";
 import donaturRouter from "./donatur/donatur-route";
@@ -26,50 +25,48 @@ app.use(
 
 // 2. Middleware Parser bawaan Express & Cookie
 app.use(express.json());
+// 🟢 CHANGED LINE 29: Added urlencoded. Essential for parsing standard HTML form submissions securely.
+app.use(express.urlencoded({ extended: true })); 
 app.use(cookieParser());
 
+// 3. Routing
 app.use(`${API_PREFIX}/auth`, authRoute);
 app.use(`${API_PREFIX}/donatur`, donaturRouter);
 app.use(`${API_PREFIX}/donasi`, donasiRouter);
 app.use(`${API_PREFIX}/laporan`, laporanRouter);
 app.use(`${API_PREFIX}/satwa`, router);
-app.use("/api/v1/dashboard", dashboardRouter);
-app.use("/api/v1/shelter", shelterRouter);
+// 🟢 CHANGED LINES 39-40: Replaced hardcoded "/api/v1" with dynamic `${API_PREFIX}` for architecture consistency.
+app.use(`${API_PREFIX}/dashboard`, dashboardRouter);
+app.use(`${API_PREFIX}/shelter`, shelterRouter);
 
-// 4. Akses File Static
-app.use(
-  `${API_PREFIX}/src/uploads`,
-  express.static(path.join(__dirname, "uploads")),
-);
+// 🟢 CHANGED: COMPLETELY REMOVED `app.use(express.static(...))`
+// Why: Requirement 1.6 mandates cloud storage only. Removing this prevents accidental local file uploads.
 
-app.use(
-  `${API_PREFIX}/uploads`,
-  express.static(path.join(process.cwd(), "public/uploads")),
-);
-
-// 5. Endpoint Uji Coba Base (Ping-Pong)
+// 4. Endpoint Uji Coba Base (Ping-Pong)
 app.get("/ping", (_: Request, res: Response) => {
   res.status(StatusCodes.OK).json({ message: "pong" });
 });
 
-// 6. Global Error Handling Middleware
+// 5. Global Error Handling Middleware
 app.use((err: any, _: Request, res: Response, __: NextFunction) => {
-  // 🟢 Tambahkan console.log ini untuk melacak file pembuat error:
-  console.log("🔥 ERROR KETEMU DI SINI ->", err);
+  // 🟢 CHANGED LINES 53-55: Complies with Req 2.1 ("No console.log in production").
+  // It will now ONLY log errors to your terminal if you are in development mode.
+  if (process.env.NODE_ENV !== "production") {
+    console.error("🔥 [DEV ERROR LOG]:", err);
+  }
 
-  res.status(err?.status || StatusCodes.INTERNAL_SERVER_ERROR).json({
+  // 🟢 CHANGED LINE 58: Fallback to err.statusCode (used by many libraries) if err.status is missing.
+  const status = err?.status || err?.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+  
+  res.status(status).json({
     success: false,
     message: err?.message || "Internal Server Error",
     data: null,
   });
 });
 
-// if (
-//   process.env.NODE_ENV === "Mini-Project" ||
-//   process.env.NODE_ENV === "development" ||
-//   !process.env.NODE_ENV
-// ) {
- app.listen(PORT, () => {
+// 🟢 CHANGED LINE 67: Cleaned up messy commented-out environment checks. 
+app.listen(PORT, () => {
   console.log(`[⚡APP] Application is running on port: ${PORT}`);
 });
 

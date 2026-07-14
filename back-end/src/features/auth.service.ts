@@ -1,5 +1,5 @@
 import { PrismaClient, Role } from "@prisma/client";
-import { BcryptUtil } from "../utils/bycrypt";
+import { BcryptUtil } from "../utils/bycrypt"; 
 import { JWTUtil } from "../utils/jwt";
 import { ResponseError } from "../utils/response-error.util";
 import { StatusCodes } from "http-status-codes";
@@ -25,40 +25,24 @@ export class AuthService {
     } = body;
 
     const existing = await prisma.user.findUnique({
-      where: {
-        email: body.email,
-      },
+      where: { email: body.email },
     });
+
     if (existing) {
       throw new ResponseError(StatusCodes.CONFLICT, "Email already registered");
     }
 
     const hashed = await BcryptUtil.hashPassword(body.password);
 
-    // ── DONATUR ──────────────────────────────────────────────
-    if (role === Role.DONATUR) {
+    // ── DONATUR & ADMIN ──────────────────────────────────────────────
+    if (role === Role.DONATUR || role === Role.SUPER_ADMIN) {
       const user = await prisma.user.create({
         data: {
           email,
           password: hashed,
           namaLengkap,
           noWhatsapp: noWhatsapp ?? null,
-          role: Role.DONATUR,
-        },
-      });
-
-      const { password: _, ...safeUser } = user;
-      return safeUser;
-    }
-
-    // ── ADMIN ─────────────────────────────────────────────────
-    if (role === Role.SUPER_ADMIN) {
-      const user = await prisma.user.create({
-        data: {
-          email,
-          password: hashed,
-          namaLengkap,
-          role: Role.SUPER_ADMIN,
+          role: role,
         },
       });
 
@@ -68,21 +52,6 @@ export class AuthService {
 
     // ── SHELTER ───────────────────────────────────────────────
     if (role === Role.SHELTER) {
-      if (
-        !namaShelter ||
-        !deskripsi ||
-        !kota ||
-        !alamatLengkap ||
-        !namaBank ||
-        !atasNamaRekening ||
-        !nomorRekening
-      ) {
-        throw new ResponseError(
-          StatusCodes.BAD_REQUEST,
-          "Semua data profil dan rekening shelter wajib diisi",
-        );
-      }
-
       const result = await prisma.$transaction(async (tx) => {
         const user = await tx.user.create({
           data: {
@@ -94,23 +63,23 @@ export class AuthService {
           },
         });
 
-        // PERBAIKAN: Menggunakan nested write untuk relasi ShelterBank[cite: 2]
         const shelter = await tx.shelter.create({
           data: {
             userId: user.id,
-            namaShelter,
-            deskripsi,
-            kota,
-            alamatLengkap,
+            namaShelter: namaShelter!,
+            deskripsi: deskripsi!,
+            kota: kota!,
+            alamatLengkap: alamatLengkap!,
             noWhatsapp: noWhatsapp!,
             rekening: {
               create: {
-                namaBank,
-                atasNamaRekening,
-                nomorRekening,
+                namaBank: namaBank!,
+                atasNamaRekening: atasNamaRekening!,
+                nomorRekening: nomorRekening!,
               },
             },
           },
+          include: { rekening: true }
         });
 
         const { password: _, ...safeUser } = user;
@@ -123,38 +92,31 @@ export class AuthService {
     throw new ResponseError(StatusCodes.BAD_REQUEST, "Invalid role");
   }
 
-  // ============================================================
-  // LOGIN
-  // ============================================================
   static async login({ body }: { body: AuthLoginInput }) {
     const { email, password } = body;
 
     const user = await prisma.user.findFirst({
       where: {
         email,
-        deletedAt: null,
+        deletedAt: null, 
       },
       include: {
         shelter: true,
       },
     });
+
     if (!user) {
-      throw new ResponseError(
-        StatusCodes.UNAUTHORIZED,
-        "Email or password is incorrect",
-      );
+      throw new ResponseError(StatusCodes.UNAUTHORIZED, "Email or password is incorrect");
     }
 
     const isValid = await BcryptUtil.comparePassword(password, user.password);
     if (!isValid) {
-      throw new ResponseError(
-        StatusCodes.UNAUTHORIZED,
-        "Email or password is incorrect",
-      );
+      throw new ResponseError(StatusCodes.UNAUTHORIZED, "Email or password is incorrect");
     }
 
     const shelterId = user.shelter?.id || null;
 
+    // JWT Payload
     const token = JWTUtil.signToken({
       id: user.id,
       email: user.email,
