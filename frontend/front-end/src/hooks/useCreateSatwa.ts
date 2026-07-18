@@ -2,6 +2,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createSatwa } from "@/services/satwa.service";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
+import { getApiErrorMessage } from "@/lib/apiError";
+import { notify } from "@/lib/notify";
+import { QUERY_KEYS } from "@/lib/queryKeys";
 
 export function useCreateSatwa() {
   const queryClient = useQueryClient();
@@ -12,19 +15,16 @@ export function useCreateSatwa() {
 
     onSuccess() {
       queryClient.invalidateQueries({
-        queryKey: ["my-satwa"],
+      queryKey: QUERY_KEYS.mySatwa
       });
 
-      toast.success("Satwa berhasil ditambahkan!");
+   notify.success("Satwa berhasil ditambahkan.");
 
-      router.push("/dashboard/shelter/animals");
+     router.push("/dashboard/shelter/satwa");
     },
 
-    onError(error: any) {
-      toast.error(
-        error?.response?.data?.message ||
-          "Gagal menambahkan satwa"
-      );
+    onError(error) {
+     notify.error(getApiErrorMessage(error));
     },
   });
 }

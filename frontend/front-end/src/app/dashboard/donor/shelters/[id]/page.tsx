@@ -11,20 +11,14 @@ import ShelterSatwaList from "@/components/shelter/shelterAnimalList";
 export default function ShelterDetailPage() {
   const params = useParams();
 
-  const { data, isLoading } = useShelterDetail(
-    params.id as string,
-  );
+  const { data, isLoading } = useShelterDetail(params.id as string);
 
   if (isLoading) {
     return <div className="p-10">Loading...</div>;
   }
 
   if (!data) {
-    return (
-      <div className="p-10">
-        Shelter tidak ditemukan.
-      </div>
-    );
+    return <div className="p-10">Shelter tidak ditemukan.</div>;
   }
 
   return (
@@ -33,9 +27,7 @@ export default function ShelterDetailPage() {
 
       <ShelterInfo shelter={data} />
 
-      <ShelterSatwaList
-        satwa={data.satwa}
-      />
+      <ShelterSatwaList satwa={data.satwa} shelterId={data.id} />
     </main>
   );
 }

@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-
+import { getApiErrorMessage } from "@/lib/apiError";
 import { verifyDonation } from "@/services/donation.service";
-
+import { notify } from "@/lib/notify";
 export function useVerifyDonation() {
   const queryClient = useQueryClient();
 
@@ -14,41 +14,26 @@ export function useVerifyDonation() {
       donationId: string;
 
       payload: {
-        statusBaru:
-          | "DIVERIFIKASI"
-          | "DITOLAK";
+        statusBaru: "DIVERIFIKASI" | "DITOLAK";
 
         alasanDitolak?: string;
       };
-    }) =>
-      verifyDonation(
-        donationId,
-        payload
-      ),
+    }) => verifyDonation(donationId, payload),
 
     onSuccess() {
-      toast.success(
-        "Status donasi berhasil diperbarui."
-      );
+      notify.success("Donasi berhasil diverifikasi.");
 
       queryClient.invalidateQueries({
-        queryKey: [
-          "donation-history",
-        ],
+        queryKey: ["donation-history"],
       });
 
       queryClient.invalidateQueries({
-        queryKey: [
-          "dashboard",
-        ],
+        queryKey: ["dashboard"],
       });
     },
 
-    onError(error: any) {
-      toast.error(
-        error?.response?.data?.message ??
-          "Gagal memperbarui status."
-      );
+    onError(error) {
+      notify.error(getApiErrorMessage(error));
     },
   });
 }

@@ -16,6 +16,8 @@ export interface ShelterResponse {
   data: Shelter[];
 }
 export interface Satwa {
+  shelterId: any;
+  shelter: any;
   id: string;
   nama: string;
   jenis: string;

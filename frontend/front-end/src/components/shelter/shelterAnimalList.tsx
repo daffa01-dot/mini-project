@@ -5,10 +5,12 @@ import { Satwa } from "@/types/shelter";
 
 interface Props {
   satwa: Satwa[];
+  shelterId: string;
 }
 
 export default function ShelterAnimalList({
   satwa,
+  shelterId,
 }: Props) {
   return (
     <section className="space-y-6">
@@ -28,10 +30,11 @@ export default function ShelterAnimalList({
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {satwa.map((satwa) => (
+          {satwa.map((item) => (
             <AnimalCard
-              key={satwa.id}
-              satwa={satwa}
+              key={item.id}
+              satwa={item}
+              shelterId={shelterId}
             />
           ))}
         </div>

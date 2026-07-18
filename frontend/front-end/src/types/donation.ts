@@ -1,7 +1,4 @@
-export type DonationStatus =
-  | "MENUNGGU"
-  | "DIVERIFIKASI"
-  | "DITOLAK";
+export type DonationStatus = "MENUNGGU" | "DIVERIFIKASI" | "DITOLAK";
 
 export interface Donation {
   id: string;
@@ -41,4 +38,18 @@ export interface CheckoutPayload {
 export interface VerifyDonationPayload {
   statusBaru: "DIVERIFIKASI" | "DITOLAK";
   alasanDitolak?: string;
+}
+export interface CheckoutResponse {
+  donasiId: string;
+
+  nominal: number;
+
+  status: string;
+
+  rekeningTujuan: {
+    namaShelter: string;
+    noWhatsapp: string;
+  };
+
+  termsAndConditions: string[];
 }

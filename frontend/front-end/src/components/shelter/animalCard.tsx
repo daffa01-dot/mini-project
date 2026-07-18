@@ -2,20 +2,18 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import {
-  Calendar,
-  PawPrint,
-  BadgeCheck,
-} from "lucide-react";
+import { Calendar, PawPrint, BadgeCheck } from "lucide-react";
 
 import { Satwa } from "@/types/shelter";
 
 interface Props {
   satwa: Satwa;
+  shelterId: string;
 }
 
 export default function AnimalCard({
   satwa,
+  shelterId,
 }: Props) {
   return (
     <div className="overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
@@ -42,13 +40,11 @@ export default function AnimalCard({
         </div>
 
         <div className="space-y-2">
-
           <div className="flex items-center gap-2 text-slate-600">
             <PawPrint
               size={18}
               className="text-green-600"
             />
-
             <span>{satwa.jenis}</span>
           </div>
 
@@ -57,7 +53,6 @@ export default function AnimalCard({
               size={18}
               className="text-green-600"
             />
-
             <span>{satwa.umur} Tahun</span>
           </div>
 
@@ -66,10 +61,8 @@ export default function AnimalCard({
               size={18}
               className="text-green-600"
             />
-
             <span>{satwa.status}</span>
           </div>
-
         </div>
 
         <div className="rounded-lg bg-green-50 p-3">
@@ -79,14 +72,12 @@ export default function AnimalCard({
 
           <h3 className="text-xl font-bold text-green-700">
             Rp{" "}
-            {satwa.danaTerkumpul.toLocaleString(
-              "id-ID"
-            )}
+            {satwa.danaTerkumpul.toLocaleString("id-ID")}
           </h3>
         </div>
 
         <Link
-          href={`/dashboard/donor/satwa/${satwa.id}`}
+          href={`/dashboard/donor/shelters/${shelterId}/satwa/${satwa.id}`}
           className="block rounded-xl bg-green-600 py-3 text-center font-semibold text-white transition hover:bg-green-700"
         >
           Lihat Detail

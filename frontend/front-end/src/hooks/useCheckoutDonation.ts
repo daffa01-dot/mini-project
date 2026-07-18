@@ -1,29 +1,27 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { QUERY_KEYS } from "@/lib/queryKeys";
 import { notify } from "@/lib/notify";
 import { getApiErrorMessage } from "@/lib/apiError";
 
-import { uploadReceipt } from "@/services/donation.service";
+import { checkoutDonation } from "@/services/donation.service";
 
-export function useUploadReceipt() {
+import type { CheckoutPayload } from "@/types/donation";
+
+export function useCheckoutDonation() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      donationId,
-      formData,
-    }: {
-      donationId: string;
-      formData: FormData;
-    }) => uploadReceipt(donationId, formData),
+    mutationFn: (payload: CheckoutPayload) => 
+        checkoutDonation(payload),
 
-    onSuccess() {
-      notify.success("Bukti transfer berhasil diupload.");
+    onSuccess(data) {
+        console.log("CHECKOUT FRONTEND:", data);
+      notify.success("Checkout berhasil");
 
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.dashboard,
@@ -33,8 +31,7 @@ export function useUploadReceipt() {
         queryKey: QUERY_KEYS.donationHistory,
       });
 
-      // sementara kembali ke dashboard donor
-      router.push("/dashboard/donor");
+      router.push(`/dashboard/donor/donation/upload?id=${data.donasiId}`);
     },
 
     onError(error) {

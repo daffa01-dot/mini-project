@@ -1,36 +1,31 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { toast } from "react-toastify"
+import { toast } from "react-toastify";
 import { updateSatwa } from "@/services/satwa.service";
+import { getApiErrorMessage } from "@/lib/apiError";
+import { notify } from "@/lib/notify";
+import { QUERY_KEYS } from "@/lib/queryKeys";
 
 export function useUpdateSatwa() {
   const queryClient = useQueryClient();
   const router = useRouter();
 
   return useMutation({
-    mutationFn: ({
-      id,
-      formData,
-    }: {
-      id: string;
-      formData: FormData;
-    }) => updateSatwa(id, formData),
+    mutationFn: ({ id, formData }: { id: string; formData: FormData }) =>
+      updateSatwa(id, formData),
 
     onSuccess() {
       queryClient.invalidateQueries({
-        queryKey: ["my-satwa"],
+        queryKey: QUERY_KEYS.mySatwa
       });
 
-      toast.success("Satwa berhasil diperbarui");
+    notify.success("Satwa berhasil diperbarui.");
 
-      router.push("/dashboard/shelter/satwa");
+     router.push("/dashboard/shelter/satwa");
     },
 
-    onError(error: any) {
-      toast.error(
-        error?.response?.data?.message ??
-          "Gagal memperbarui satwa"
-      );
+    onError(error) {
+      notify.error(getApiErrorMessage(error));
     },
   });
 }
