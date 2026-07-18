@@ -1,14 +1,14 @@
 "use client";
 
 import AnimalCard from "./animalCard";
-import { Animal } from "@/types/shelter";
+import { Satwa } from "@/types/shelter";
 
 interface Props {
-  animals: Animal[];
+  satwa: Satwa[];
 }
 
 export default function ShelterAnimalList({
-  animals,
+  satwa,
 }: Props) {
   return (
     <section className="space-y-6">
@@ -22,16 +22,16 @@ export default function ShelterAnimalList({
         </p>
       </div>
 
-      {animals.length === 0 ? (
+      {satwa.length === 0 ? (
         <div className="rounded-xl bg-white p-10 text-center shadow">
           Belum ada satwa.
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {animals.map((animal) => (
+          {satwa.map((satwa) => (
             <AnimalCard
-              key={animal.id}
-              animal={animal}
+              key={satwa.id}
+              satwa={satwa}
             />
           ))}
         </div>

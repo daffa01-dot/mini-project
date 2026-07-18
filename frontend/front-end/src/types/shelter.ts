@@ -15,7 +15,7 @@ export interface ShelterResponse {
   message: string;
   data: Shelter[];
 }
-export interface Animal {
+export interface Satwa {
   id: string;
   nama: string;
   jenis: string;
@@ -33,5 +33,5 @@ export interface ShelterDetail extends Shelter {
   noWhatsapp: string;
   status: string;
   isAktif: boolean;
-  satwa: Animal[];
+  satwa: Satwa[];
 }

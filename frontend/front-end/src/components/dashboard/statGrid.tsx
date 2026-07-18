@@ -1,8 +1,15 @@
-import StatsCard from "./dashboardStat"
-import { DashboardStats } from "@/types/dashboard";
+import {
+  PawPrint,
+  Wallet,
+  FileText,
+  Clock3,
+} from "lucide-react";
+
+import DashboardStatCard from "@/components/dashboard/common/dashboardStatCard";
+import { DashboardSummary } from "@/types/dashboard";
 
 interface Props {
-  data?: DashboardStats;
+  data?: DashboardSummary;
 }
 
 export default function StatsGrid({
@@ -11,26 +18,30 @@ export default function StatsGrid({
   return (
     <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
 
-      <StatsCard
+      <DashboardStatCard
         title="Total Satwa"
         value={data?.totalSatwa ?? 0}
+        icon={PawPrint}
       />
 
-      <StatsCard
+      <DashboardStatCard
         title="Total Donasi"
         value={`Rp ${Number(
           data?.totalDonasi ?? 0
         ).toLocaleString("id-ID")}`}
+        icon={Wallet}
       />
 
-      <StatsCard
+      <DashboardStatCard
         title="Total Laporan"
         value={data?.totalLaporan ?? 0}
+        icon={FileText}
       />
 
-      <StatsCard
+      <DashboardStatCard
         title="Pending"
-        value={data?.totalDonasiPending ?? 0}
+        value={data?.totalPending ?? 0}
+        icon={Clock3}
       />
 
     </div>

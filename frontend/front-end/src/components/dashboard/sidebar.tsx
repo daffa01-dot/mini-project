@@ -44,7 +44,7 @@ export default function Sidebar() {
     },
     {
       title: "Kelola Satwa",
-      href: "/dashboard/shelter/animals",
+      href: "/dashboard/shelter/satwa",
       icon: PawPrint,
     },
     {

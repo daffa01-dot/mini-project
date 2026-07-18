@@ -14,7 +14,7 @@ export default function SatwaTable({ data, onDelete }: Props) {
         <h2 className="text-xl font-semibold">Kelola Satwa</h2>
 
         <Link
-          href="/dashboard/shelter/animals/create"
+          href="/dashboard/shelter/satwa/create"
           className="rounded-lg bg-green-600 px-4 py-2 text-white"
         >
           Tambah Satwa
@@ -54,7 +54,7 @@ export default function SatwaTable({ data, onDelete }: Props) {
               <td>
                 <div className="flex gap-2">
                   <Link
-                   href={`/dashboard/shelter/animals/${item.id}/edit`}
+                   href={`/dashboard/shelter/satwa/${item.id}/edit`}
                     className="rounded bg-blue-600 px-3 py-1 text-white"
                   >
                     Edit

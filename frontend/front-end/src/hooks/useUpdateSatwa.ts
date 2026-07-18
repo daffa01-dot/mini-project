@@ -23,7 +23,7 @@ export function useUpdateSatwa() {
 
       toast.success("Satwa berhasil diperbarui");
 
-      router.push("/dashboard/shelter/animals");
+      router.push("/dashboard/shelter/satwa");
     },
 
     onError(error: any) {

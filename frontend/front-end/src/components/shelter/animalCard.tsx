@@ -8,22 +8,22 @@ import {
   BadgeCheck,
 } from "lucide-react";
 
-import { Animal } from "@/types/shelter";
+import { Satwa } from "@/types/shelter";
 
 interface Props {
-  animal: Animal;
+  satwa: Satwa;
 }
 
 export default function AnimalCard({
-  animal,
+  satwa,
 }: Props) {
   return (
     <div className="overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
       {/* FOTO */}
       <div className="relative h-56 w-full">
         <Image
-          src={animal.foto}
-          alt={animal.nama}
+          src={satwa.foto}
+          alt={satwa.nama}
           fill
           className="object-cover"
         />
@@ -33,11 +33,11 @@ export default function AnimalCard({
       <div className="space-y-4 p-5">
         <div>
           <h2 className="text-2xl font-bold">
-            {animal.nama}
+            {satwa.nama}
           </h2>
 
           <p className="text-sm text-slate-500">
-            {animal.ras}
+            {satwa.ras}
           </p>
         </div>
 
@@ -49,7 +49,7 @@ export default function AnimalCard({
               className="text-green-600"
             />
 
-            <span>{animal.jenis}</span>
+            <span>{satwa.jenis}</span>
           </div>
 
           <div className="flex items-center gap-2 text-slate-600">
@@ -58,7 +58,7 @@ export default function AnimalCard({
               className="text-green-600"
             />
 
-            <span>{animal.umur} Tahun</span>
+            <span>{satwa.umur} Tahun</span>
           </div>
 
           <div className="flex items-center gap-2 text-slate-600">
@@ -67,7 +67,7 @@ export default function AnimalCard({
               className="text-green-600"
             />
 
-            <span>{animal.status}</span>
+            <span>{satwa.status}</span>
           </div>
 
         </div>
@@ -79,14 +79,14 @@ export default function AnimalCard({
 
           <h3 className="text-xl font-bold text-green-700">
             Rp{" "}
-            {animal.danaTerkumpul.toLocaleString(
+            {satwa.danaTerkumpul.toLocaleString(
               "id-ID"
             )}
           </h3>
         </div>
 
         <Link
-          href={`/dashboard/donor/animals/${animal.id}`}
+          href={`/dashboard/donor/satwa/${satwa.id}`}
           className="block rounded-xl bg-green-600 py-3 text-center font-semibold text-white transition hover:bg-green-700"
         >
           Lihat Detail

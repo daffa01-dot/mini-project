@@ -6,7 +6,7 @@ import { useShelterDetail } from "@/hooks/useShelterDetail";
 
 import ShelterBanner from "@/components/shelter/shelterBanner";
 import ShelterInfo from "@/components/shelter/shelterInfo";
-import ShelterAnimalList from "@/components/shelter/shelterAnimalList";
+import ShelterSatwaList from "@/components/shelter/shelterAnimalList";
 
 export default function ShelterDetailPage() {
   const params = useParams();
@@ -33,8 +33,8 @@ export default function ShelterDetailPage() {
 
       <ShelterInfo shelter={data} />
 
-      <ShelterAnimalList
-        animals={data.satwa}
+      <ShelterSatwaList
+        satwa={data.satwa}
       />
     </main>
   );

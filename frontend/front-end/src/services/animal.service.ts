@@ -1,9 +1,9 @@
 import api from "@/lib/axios";
-import { AnimalResponse, Animal} from "@/types/satwa";
+import { AnimalResponse, Satwa} from "@/types/satwa";
 
 export const getAnimalDetail = async (
   id: string,
-): Promise<Animal> => {
+): Promise<Satwa> => {
   const { data } = await api.get<AnimalResponse>(
     `/satwa/${id}`
   );

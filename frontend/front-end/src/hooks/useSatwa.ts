@@ -1,14 +1,13 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { getSatwaById } from "@/services/satwa.service";
 
-import { getAnimalDetail } from "@/services/animal.service";
-
-export function useAnimal(id: string) {
+export function useSatwa(id: string) {
   return useQuery({
-    queryKey: ["animal", id],
+    queryKey: ["satwa", id],
 
-    queryFn: () => getAnimalDetail(id),
+    queryFn: () => getSatwaById(id),
 
     enabled: !!id,
   });

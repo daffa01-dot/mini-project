@@ -1,4 +1,4 @@
-export interface Animal {
+export interface Satwa {
   id: string;
   shelterId: string;
 
@@ -37,5 +37,5 @@ export interface Animal {
 export interface AnimalResponse {
   success: boolean;
   message: string;
-  data: Animal;
+  data: Satwa;
 }

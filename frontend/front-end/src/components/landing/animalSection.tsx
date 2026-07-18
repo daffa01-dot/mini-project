@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-const animals = [
+const satwa = [
   {
     id: 1,
     nama: "Milo",
@@ -44,18 +44,18 @@ export default function AnimalSection() {
 
         <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
 
-          {animals.map((animal) => (
+          {satwa.map((satwa) => (
 
             <div
-              key={animal.id}
+              key={satwa.id}
               className="overflow-hidden rounded-3xl bg-white shadow-lg"
             >
 
               <Image
-                src={animal.image}
+                src={satwa.image}
                 width={500}
                 height={350}
-                alt={animal.nama}
+                alt={satwa.nama}
                 className="h-60 w-full object-cover"
               />
 
@@ -63,13 +63,13 @@ export default function AnimalSection() {
 
                 <h3 className="text-2xl font-bold">
 
-                  {animal.nama}
+                  {satwa.nama}
 
                 </h3>
 
                 <p className="text-slate-500">
 
-                  {animal.jenis}
+                  {satwa.jenis}
 
                 </p>
 
@@ -79,7 +79,7 @@ export default function AnimalSection() {
 
                     <span>Progress Donasi</span>
 
-                    <span>{animal.progress}%</span>
+                    <span>{satwa.progress}%</span>
 
                   </div>
 
@@ -87,7 +87,7 @@ export default function AnimalSection() {
 
                     <div
                       style={{
-                        width: `${animal.progress}%`,
+                        width: `${satwa.progress}%`,
                       }}
                       className="h-3 rounded-full bg-green-600"
                     />

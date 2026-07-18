@@ -31,18 +31,18 @@ export default function ShelterAnimals() {
 
       <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
 
-        {animals.map((animal) => (
+        {animals.map((satwa) => (
 
           <div
-            key={animal.id}
+            key={satwa.id}
             className="overflow-hidden rounded-3xl bg-white shadow-lg"
           >
 
             <Image
-              src={animal.image}
+              src={satwa.image}
               width={500}
               height={300}
-              alt={animal.nama}
+              alt={satwa.nama}
               className="h-56 w-full object-cover"
             />
 
@@ -50,12 +50,12 @@ export default function ShelterAnimals() {
 
               <h3 className="text-2xl font-bold">
 
-                {animal.nama}
+                {satwa.nama}
 
               </h3>
 
               <Link
-                href={`/animals/${animal.id}`}
+                href={`/animals/${satwa.id}`}
                 className="mt-6 block rounded-xl bg-green-600 py-3 text-center text-white"
               >
                 Detail Satwa
