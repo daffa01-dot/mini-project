@@ -8,6 +8,7 @@ export interface JWTPayload {
   id: string;
   email: string;
   role: Role;
+  shelterId?: string | null;
 }
 
 export class JWTUtil {

@@ -1,40 +1,37 @@
 import { z } from "zod";
 
-export const loginSchema = z.object({
-  email: z.email("Email tidak valid"),
-  password: z.string().min(6, "Password minimal 6 karakter"),
+export const RegisterSchema = z.object({
+  namaLengkap: z
+    .string()
+    .min(3, "Nama minimal 3 karakter"),
+
+  email: z
+    .string()
+    .email("Email tidak valid"),
+
+  password: z
+    .string()
+    .min(6, "Password minimal 6 karakter"),
+
+  role: z.enum(["DONATUR", "SHELTER"]).optional(),
+
+  namaShelter: z.string().optional(),
+
+  noWhatsapp: z.string().optional(),
+
+  kota: z.string().optional(),
+
+  alamatLengkap: z.string().optional(),
+
+  deskripsi: z.string().optional(),
 });
 
-export const registerDonaturSchema = z
-  .object({
-    namaLengkap: z.string().min(3),
+export const LoginSchema = z.object({
+  email: z
+    .string()
+    .email(),
 
-    email: z.email(),
-
-    noWhatsapp: z.string().optional(),
-
-    password: z.string().min(6),
-
-    confirmPassword: z.string().min(6),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Password tidak sama",
-    path: ["confirmPassword"],
-  });
-
-export const registerShelterSchema = registerDonaturSchema
-  .extend({
-    namaShelter: z.string().min(3),
-
-    kota: z.string(),
-
-    alamatLengkap: z.string(),
-
-    deskripsi: z.string(),
-
-    namaBank: z.string(),
-
-    nomorRekening: z.string(),
-
-    atasNamaRekening: z.string(),
-  });
+  password: z
+    .string()
+    .min(6),
+});

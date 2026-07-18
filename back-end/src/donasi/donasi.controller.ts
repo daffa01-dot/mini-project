@@ -2,7 +2,6 @@ import { NextFunction, Request, Response } from "express";
 import { DonasiService } from "./donasi.service";
 import { StatusCodes } from "http-status-codes";
 
-
 type GetRiwayatProps = {
   role: string;
   userId?: string;
@@ -12,15 +11,16 @@ type GetRiwayatProps = {
 export class DonasiController {
   static async checkout(req: Request, res: Response, next: NextFunction) {
     try {
-      const donaturId = res.locals.payload?.id || (req as any).user?.id;
+      const donaturId = res.locals.payload?.id;
       const { nominal, catatan, satwaId, shelterId } = req.body;
-
+console.log("CHECKOUT JWT");
+console.log(res.locals.payload);
       const result = await DonasiService.createCheckout({
         nominal: Number(nominal),
         catatan,
         satwaId,
         shelterId,
-        donaturId,
+        donaturId: donaturId,
       });
 
       return res.status(StatusCodes.CREATED).json({
@@ -35,7 +35,7 @@ export class DonasiController {
 
   static async uploadBukti(req: Request, res: Response, next: NextFunction) {
     try {
-      const donaturId = res.locals.payload?.id || (req as any).user?.id;
+      const userId = res.locals.payload.id;
       const donasiId = req.params.donasiId as string;
 
       const file = (req as any).file;
@@ -51,7 +51,7 @@ export class DonasiController {
 
       const result = await DonasiService.uploadBuktiResi({
         donasiId,
-        donaturId,
+        donaturId: userId,
         buktiResiPath,
       });
 
@@ -67,11 +67,14 @@ export class DonasiController {
 
   static async verifikasi(req: Request, res: Response, next: NextFunction) {
     try {
-      const { donasiId } = req.params;
+      const donasiId = req.params.donasiId as string;
       const { statusBaru, alasanDitolak } = req.body;
 
+      const userId = res.locals.payload.id;
+
       const result = await DonasiService.verifikasiDonasi({
-        donasiId: donasiId as string,
+        userId,
+        donasiId,
         statusBaru,
         alasanDitolak,
       });
@@ -89,7 +92,8 @@ export class DonasiController {
   static async getRiwayat(req: Request, res: Response, next: NextFunction) {
     try {
       const payload = res.locals.payload;
-
+console.log("RIWAYAT JWT");
+console.log(res.locals.payload);
       const result = await DonasiService.getRiwayat({
         role: payload.role,
         userId: payload.id,
@@ -118,9 +122,12 @@ export class DonasiController {
       }
 
       // Pastikan fungsi ini memanggil service yang kita buat sebelumnya
-      const result = await DonasiService.deleteDonasi(donasiId);
+      const userId = res.locals.payload.id;
+      const role = res.locals.payload.role;
 
-      res.status(StatusCodes.OK).json({
+      const result = await DonasiService.deleteDonasi(userId, role, donasiId);
+
+      return res.status(StatusCodes.OK).json({
         success: true,
         message: "Donasi berhasil dihapus",
         data: result,
@@ -129,4 +136,30 @@ export class DonasiController {
       next(error);
     }
   }
+  static async getById(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const donasiId = req.params.donasiId;
+
+    if (!donasiId || Array.isArray(donasiId)) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: "Parameter donasiId tidak valid",
+      });
+    }
+
+    const result = await DonasiService.getById(donasiId);
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Detail donasi berhasil diambil.",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
 }

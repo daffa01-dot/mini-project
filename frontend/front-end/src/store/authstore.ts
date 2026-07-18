@@ -2,49 +2,41 @@ import { create } from "zustand";
 
 interface User {
   id: string;
-
-  email: string;
-
-  role: string;
-
   namaLengkap: string;
+  email: string;
+  role: "DONATUR" | "SHELTER" | "SUPER_ADMIN";
 }
 
-interface AuthStore {
+interface AuthState {
   user: User | null;
 
   token: string | null;
 
-  isAuthenticated: boolean;
+  setUser: (user: User) => void;
 
-  login: (user: User, token: string) => void;
+  setToken: (token: string) => void;
 
   logout: () => void;
 }
 
-export const useAuthStore =
-  create<AuthStore>((set) => ({
-    user: null,
+export const useAuthStore = create<AuthState>((set) => ({
+  user: null,
 
-    token: null,
+  token: null,
 
-    isAuthenticated: false,
+  setUser: (user) =>
+    set({
+      user,
+    }),
 
-    login: (user, token) =>
-      set({
-        user,
+  setToken: (token) =>
+    set({
+      token,
+    }),
 
-        token,
-
-        isAuthenticated: true,
-      }),
-
-    logout: () =>
-      set({
-        user: null,
-
-        token: null,
-
-        isAuthenticated: false,
-      }),
-  }));
+  logout: () =>
+    set({
+      user: null,
+      token: null,
+    }),
+}));

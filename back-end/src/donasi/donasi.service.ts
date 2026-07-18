@@ -3,6 +3,7 @@ import prisma from "../configs/prisma-client.config";
 import { ResponseError } from "../utils/response-error.util";
 import { MailerUtil } from "../utils/mailer.util";
 import { TemplateUtil } from "../modules/template/template.util";
+import { Status } from "../../generated/prisma";
 
 interface GetRiwayatProps {
   role: string;
@@ -24,11 +25,13 @@ interface UploadBuktiProps {
   buktiResiPath: string;
 }
 
-interface VerifikasiDonasiProps {
+type VerifikasiDonasiProps = {
+  userId: string;
   donasiId: string;
-  statusBaru: "DIVERIFIKASI" | "DITOLAK";
+  statusBaru: Status;
   alasanDitolak?: string;
-}
+  shelterId?: string;
+};
 
 export class DonasiService {
   static async createCheckout({
@@ -44,6 +47,12 @@ export class DonasiService {
         "Minimal donasi adalah Rp10.000",
       );
     }
+    console.log("CHECKOUT PAYLOAD", {
+  nominal,
+  satwaId,
+  shelterId,
+  donaturId,
+});
 
     let targetShelterId = shelterId;
 
@@ -84,9 +93,6 @@ export class DonasiService {
         id: targetShelterId,
         deletedAt: null,
       },
-      include: {
-        rekening: true,
-      },
     });
 
     if (!shelter) {
@@ -95,6 +101,7 @@ export class DonasiService {
         "Shelter tidak ditemukan.",
       );
     }
+    console.log("CREATE DONASI");
 
     const donasi = await prisma.donasi.create({
       data: {
@@ -107,6 +114,8 @@ export class DonasiService {
         buktiResi: "",
       },
     });
+console.log("DONASI CREATED");
+console.log(donasi);
 
     return {
       donasiId: donasi.id,
@@ -114,9 +123,7 @@ export class DonasiService {
       status: donasi.status,
       rekeningTujuan: {
         namaShelter: shelter.namaShelter,
-        bank: shelter.rekening?.namaBank,
-        nomorRekening: shelter.rekening?.nomorRekening,
-        atasNama: shelter.rekening?.atasNamaRekening,
+        noWhatsapp: shelter.noWhatsapp,
       },
       termsAndConditions: [
         "Donasi bersifat sukarela.",
@@ -149,6 +156,22 @@ export class DonasiService {
       );
     }
 
+    // Donasi harus masih menunggu
+    if (donasi.status !== "MENUNGGU") {
+      throw new ResponseError(
+        StatusCodes.BAD_REQUEST,
+        "Donasi sudah diproses dan bukti transfer tidak dapat diubah.",
+      );
+    }
+
+    // Jangan upload dua kali
+    if (donasi.buktiResi) {
+      throw new ResponseError(
+        StatusCodes.BAD_REQUEST,
+        "Bukti transfer sudah pernah diupload.",
+      );
+    }
+
     const updated = await prisma.donasi.update({
       where: {
         id: donasiId,
@@ -168,14 +191,32 @@ export class DonasiService {
   }
 
   static async verifikasiDonasi({
+    userId,
     donasiId,
     statusBaru,
     alasanDitolak,
   }: VerifikasiDonasiProps) {
+    // Cari shelter berdasarkan user yang login
+    const shelter = await prisma.shelter.findFirst({
+      where: {
+        userId,
+        deletedAt: null,
+      },
+    });
+
+    if (!shelter) {
+      throw new ResponseError(
+        StatusCodes.NOT_FOUND,
+        "Profil Shelter tidak ditemukan.",
+      );
+    }
+
     const resultData = await prisma.$transaction(async (tx) => {
+      // Pastikan donasi milik shelter yang sedang login
       const donasi = await tx.donasi.findFirst({
         where: {
           id: donasiId,
+          shelterId: shelter.id,
           deletedAt: null,
         },
         include: {
@@ -196,6 +237,23 @@ export class DonasiService {
         );
       }
 
+      // Tidak boleh diproses dua kali
+      if (donasi.status !== "MENUNGGU") {
+        throw new ResponseError(
+          StatusCodes.BAD_REQUEST,
+          "Donasi sudah diproses.",
+        );
+      }
+
+      // Bukti transfer harus sudah ada
+      if (!donasi.buktiResi) {
+        throw new ResponseError(
+          StatusCodes.BAD_REQUEST,
+          "Donatur belum mengupload bukti transfer.",
+        );
+      }
+
+      // Jika ditolak wajib ada alasan
       if (statusBaru === "DITOLAK" && !alasanDitolak) {
         throw new ResponseError(
           StatusCodes.BAD_REQUEST,
@@ -214,31 +272,21 @@ export class DonasiService {
           diverifikasiAt: new Date(),
         },
       });
-      if (statusBaru === "DIVERIFIKASI") {
-        const nominalDonasi = updatedDonasi?.nominal;
 
-        if (updatedDonasi.satwaId) {
-          const satwa = await tx.satwa.findFirst({
-            where: {
-              id: updatedDonasi.satwaId,
-              deletedAt: null,
+      // Jika diverifikasi, tambahkan dana satwa
+      if (statusBaru === "DIVERIFIKASI" && updatedDonasi.satwaId) {
+        await tx.satwa.update({
+          where: {
+            id: updatedDonasi.satwaId,
+          },
+          data: {
+            danaTerkumpul: {
+              increment: updatedDonasi.nominal,
             },
-          });
-
-          if (satwa) {
-            await tx.satwa.update({
-              where: {
-                id: satwa.id,
-              },
-              data: {
-                danaTerkumpul: {
-                  increment: updatedDonasi.nominal,
-                },
-              },
-            });
-          }
-        }
+          },
+        });
       }
+
       return {
         donasiId: updatedDonasi.id,
         nominal: updatedDonasi.nominal,
@@ -249,14 +297,11 @@ export class DonasiService {
       };
     });
 
-    // 2. 🟢 INTEGRASI BARU: Render Handlebars (.hbs) & Kirim Email via MailerUtil
+    // Kirim Email
     try {
-      if (resultData.donatur && resultData.donatur.email) {
-        const nominalFormatted = (resultData.nominal || 0).toLocaleString(
-          "id-ID",
-        );
+      if (resultData.donatur?.email) {
+        const nominalFormatted = resultData.nominal.toLocaleString("id-ID");
 
-        // Memanfaatkan TemplateUtil untuk mengompilasi berkas donationmail.hbs Anda
         const htmlBody = TemplateUtil.getHtmlTemplate("donationmail", {
           namaDonatur: resultData.donatur.namaLengkap,
           nominal: nominalFormatted,
@@ -284,7 +329,6 @@ export class DonasiService {
       console.error("[Mailer Integration Error]:", mailerError);
     }
 
-    // 3. Return payload sesuai output awal kontrak service Anda
     return {
       donasiId: resultData.donasiId,
       nominal: resultData.nominal,
@@ -304,9 +348,24 @@ export class DonasiService {
         where.donaturId = userId;
         break;
 
-      case "SHELTER":
-        where.shelterId = shelterId;
+      case "SHELTER": {
+        const shelter = await prisma.shelter.findFirst({
+          where: {
+            userId,
+            deletedAt: null,
+          },
+        });
+
+        if (!shelter) {
+          throw new ResponseError(
+            StatusCodes.NOT_FOUND,
+            "Profil Shelter tidak ditemukan.",
+          );
+        }
+
+        where.shelterId = shelter.id;
         break;
+      }
 
       case "SUPER_ADMIN":
         break;
@@ -317,8 +376,11 @@ export class DonasiService {
           "Role tidak memiliki akses.",
         );
     }
+    console.log("ROLE:", role);
+    console.log("USER:", userId);
+    console.log("SHELTER:", shelterId);
 
-    return await prisma.donasi.findMany({
+    const result = await prisma.donasi.findMany({
       where,
       include: {
         donatur: {
@@ -346,19 +408,85 @@ export class DonasiService {
         createdAt: "desc",
       },
     });
+
+    console.log("WHERE:", where);
+    console.log("TOTAL DONASI:", result.length);
+    console.log("RESULT:", result);
+
+    return result;
   }
-  static async deleteDonasi(donasiId: string) {
+
+  static async deleteDonasi(userId: string, role: string, donasiId: string) {
+    // Super Admin boleh menghapus semua donasi
+    if (role === "SUPER_ADMIN") {
+      const donasi = await prisma.donasi.findFirst({
+        where: {
+          id: donasiId,
+          deletedAt: null,
+        },
+      });
+
+      if (!donasi) {
+        throw new ResponseError(
+          StatusCodes.NOT_FOUND,
+          "Data donasi tidak ditemukan.",
+        );
+      }
+
+      // Donasi yang sudah diverifikasi tidak boleh dihapus
+      if (donasi.status === "DIVERIFIKASI") {
+        throw new ResponseError(
+          StatusCodes.BAD_REQUEST,
+          "Donasi yang sudah diverifikasi tidak dapat dihapus.",
+        );
+      }
+
+      return await prisma.donasi.update({
+        where: {
+          id: donasiId,
+        },
+        data: {
+          deletedAt: new Date(),
+        },
+      });
+    }
+
+    // Cari shelter berdasarkan user login
+    const shelter = await prisma.shelter.findFirst({
+      where: {
+        userId,
+        deletedAt: null,
+      },
+    });
+
+    if (!shelter) {
+      throw new ResponseError(
+        StatusCodes.NOT_FOUND,
+        "Profil Shelter tidak ditemukan.",
+      );
+    }
+
+    // Pastikan donasi milik shelter tersebut
     const donasi = await prisma.donasi.findFirst({
       where: {
         id: donasiId,
+        shelterId: shelter.id,
         deletedAt: null,
       },
     });
 
     if (!donasi) {
       throw new ResponseError(
-        StatusCodes.NOT_FOUND,
-        "Data donasi tidak ditemukan.",
+        StatusCodes.FORBIDDEN,
+        "Anda tidak memiliki akses ke donasi ini.",
+      );
+    }
+
+    // Donasi yang sudah diverifikasi tidak boleh dihapus
+    if (donasi.status === "DIVERIFIKASI") {
+      throw new ResponseError(
+        StatusCodes.BAD_REQUEST,
+        "Donasi yang sudah diverifikasi tidak dapat dihapus.",
       );
     }
 
@@ -367,8 +495,27 @@ export class DonasiService {
         id: donasiId,
       },
       data: {
-        deletedAt : null,
+        deletedAt: new Date(),
       },
     });
+  }
+  static async getById(donasiId: string) {
+    const donasi = await prisma.donasi.findFirst({
+      where: {
+        id: donasiId,
+        deletedAt: null,
+      },
+      include: {
+        donatur: true,
+        shelter: true,
+        satwa: true,
+      },
+    });
+
+    if (!donasi) {
+      throw new ResponseError(StatusCodes.NOT_FOUND, "Donasi tidak ditemukan.");
+    }
+
+    return donasi;
   }
 }

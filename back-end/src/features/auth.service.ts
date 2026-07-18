@@ -164,4 +164,31 @@ export class AuthService {
     const { password: _, ...safeUser } = user;
     return { safeUser, token };
   }
+  static async me(userId: string) {
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId,
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        namaLengkap: true,
+        email: true,
+        role: true,
+        noWhatsapp: true,
+        shelter: {
+          select: {
+            id: true,
+            namaShelter: true,
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new ResponseError(StatusCodes.NOT_FOUND, "User tidak ditemukan");
+    }
+
+    return user;
+  }
 }

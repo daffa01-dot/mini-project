@@ -3,52 +3,104 @@ import { CloudinaryUtil } from "../utils/cloudinaryutil";
 import { ResponseError } from "../utils/response-error.util";
 import { StatusCodes } from "http-status-codes";
 import prisma from "../configs/prisma-client.config";
+import { Prisma } from "../../generated/prisma";
 
 export class SatwaService {
   static async getAllSatwa() {
     return await prisma.satwa.findMany({
-      where: {
-        deletedAt: null,
-      },
-      include: {
-        shelter: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
+      where: { deletedAt: null },
+      include: { shelter: true },
+      orderBy: { createdAt: "desc" },
     });
   }
+
   static async getSatwaById(id: string) {
     const satwa = await prisma.satwa.findFirst({
-      where: {
-        id,
-        deletedAt: null,
-      },
-      include: {
-        shelter: true,
-      },
+      where: { id, deletedAt: null },
+      include: { shelter: true },
     });
-    if (!satwa) {
+    if (!satwa)
       throw new ResponseError(StatusCodes.NOT_FOUND, "Satwa tidak ditemukan");
-    }
-
     return satwa;
   }
-  static async updateSatwa(id: string, data: any) {
+
+  static async updateSatwa(
+    userId: string,
+    satwaId: string,
+    payload: any,
+    file?: Express.Multer.File,
+  ) {
+    const validatedData = SatwaValidation.UPDATE.parse({
+      body: payload,
+    }).body;
+    // 1. Get the shelter belonging to the user
     const shelter = await prisma.shelter.findFirst({
       where: {
-        id,
+        userId,
         deletedAt: null,
       },
     });
+    if (!shelter)
+      throw new ResponseError(
+        StatusCodes.NOT_FOUND,
+        "Profil Shelter tidak ditemukan",
+      );
+
+    // 2. Find the satwa and check if it belongs to this shelter
+    const satwa = await prisma.satwa.findFirst({
+      where: { id: satwaId, shelterId: shelter.id, deletedAt: null },
+    });
+
+    if (!satwa) {
+      throw new ResponseError(
+        StatusCodes.FORBIDDEN,
+        "Anda tidak memiliki akses ke satwa ini",
+      );
+    }
+    let fotoUrl = satwa.foto;
+
+    if (file) {
+      fotoUrl = await CloudinaryUtil.uploadBuffer(file.buffer, "hewan_photos");
+    }
+
+    // Build update data
+    const updateData: Prisma.SatwaUpdateInput = Object.fromEntries(
+      Object.entries({
+        ...validatedData,
+        foto: fotoUrl,
+      }).filter(([, value]) => value !== undefined),
+    );
+    // Update
+    console.log("validatedData:", validatedData);
+console.log("updateData:", updateData);
+console.log("BEFORE");
+
+   const result = await prisma.satwa.update({
+  where: {
+    id: satwaId,
+  },
+  data: updateData,
+});
+
+console.log("RESULT");
+console.log(result);
+
+return result;
+  }
+  static async deleteSatwa(userId: string, satwaId: string) {
+    const shelter = await prisma.shelter.findFirst({ where: { userId } });
+
+    if (!shelter) {
+      throw new ResponseError(
+        StatusCodes.NOT_FOUND,
+        "Profil Shelter tidak ditemukan",
+      );
+    }
 
     const satwa = await prisma.satwa.findFirst({
       where: {
-        id,
-        deletedAt: null,
-      },
-      include: {
-        shelter: true,
+        id: satwaId as string,
+        shelterId: shelter.id,
       },
     });
 
@@ -58,19 +110,13 @@ export class SatwaService {
         "Anda tidak memiliki akses ke satwa ini",
       );
     }
-  }
-  static async deleteSatwa(id: string) {
-    await this.getSatwaById(id);
 
     return await prisma.satwa.update({
-      where: {
-        id,
-      },
-      data: {
-        deletedAt: new Date(),
-      },
+      where: { id: satwaId as string },
+      data: { deletedAt: new Date() },
     });
   }
+
   static async create(
     userId: string,
     payload: any,
@@ -79,10 +125,7 @@ export class SatwaService {
     const validatedData = SatwaValidation.CREATE.parse({ body: payload }).body;
 
     const shelter = await prisma.shelter.findFirst({
-      where: {
-        userId,
-        deletedAt: null,
-      },
+      where: { userId, deletedAt: null },
     });
 
     if (!shelter) {
@@ -97,9 +140,8 @@ export class SatwaService {
       fotoUrl = await CloudinaryUtil.uploadBuffer(file.buffer, "hewan_photos");
     }
 
-    const newsatwa = await prisma.satwa.create({
-      
-        data: {
+    return await prisma.satwa.create({
+      data: {
         shelterId: shelter.id,
         nama: validatedData.nama,
         jenis: validatedData.jenis,
@@ -109,11 +151,34 @@ export class SatwaService {
         deskripsi: validatedData.deskripsi ?? null,
         foto: fotoUrl,
       },
-    
+    });
+  }
+  static async getMyAnimals(userId: string) {
+    const shelter = await prisma.shelter.findFirst({
+      where: {
+        userId,
+        deletedAt: null,
+      },
     });
 
+    if (!shelter) {
+      throw new ResponseError(
+        StatusCodes.NOT_FOUND,
+        "Profil Shelter tidak ditemukan",
+      );
+    }
 
-    return newsatwa;
-    
+    return prisma.satwa.findMany({
+      where: {
+        shelterId: shelter.id,
+        deletedAt: null,
+      },
+      include: {
+        shelter: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
   }
 }

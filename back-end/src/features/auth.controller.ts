@@ -3,6 +3,7 @@ import { AuthService } from "./auth.service";
 import { StatusCodes } from "http-status-codes";
 import { ResponseError } from "../utils/response-error.util";
 import { Role } from "@prisma/client";
+import prisma from "../configs/prisma-client.config";
 
 export class AuthController {
   static async register_user(req: Request, res: Response, next: NextFunction) {
@@ -75,4 +76,22 @@ export class AuthController {
       next(error);
     }
   }
+  static async me(req: Request, res: Response) {
+  const payload = res.locals.payload;
+
+  const user = await prisma.user.findUnique({
+    where: { id: payload.id },
+    select: {
+      id: true,
+      namaLengkap: true,
+      email: true,
+      role: true,
+    },
+  });
+
+  return res.json({
+    success: true,
+    data: user,
+  });
+}
 }

@@ -1,4 +1,5 @@
 import express, { NextFunction, Request, Response } from "express";
+
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import path from "path";
@@ -12,6 +13,7 @@ import dashboardRouter from "./dashboard/dashboard.route";
 import shelterRouter from "./shelter/shelter.route";
 import { PORT, API_PREFIX, WHITE_LIST } from "./configs/env.configs";
 
+
 const app = express();
 
 app.use(
@@ -22,10 +24,19 @@ app.use(
     credentials: true,
   }),
 );
-
+console.log("API_PREFIX =", API_PREFIX);
+app.use((req, _res, next) => {
+  console.log(`${req.method} ${req.originalUrl}`);
+  next();
+});
 app.use(express.json());
+app.get("/tes", (_req, res) => {
+  res.json({ ok: true });
+});
 app.use(cookieParser());
-
+app.get("/tes", (_req, res) => {
+  res.json({ ok: true });
+});
 app.use(`${API_PREFIX}/auth`, authRoute);
 app.use(`${API_PREFIX}/donatur`, donaturRouter);
 app.use(`${API_PREFIX}/donasi`, donasiRouter);

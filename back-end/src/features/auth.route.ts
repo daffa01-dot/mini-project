@@ -31,5 +31,9 @@ authRouter.get(
   AuthMiddleware.authenticated(secretKey),
   DonaturController.getProfile,
 );
-
+authRouter.get(
+  "/me",
+  AuthMiddleware.authenticated(secretKey),
+  AuthController.me
+);
 export default authRouter;
