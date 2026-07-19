@@ -5,11 +5,8 @@
     "outDir": "./dist",
     "baseUrl": ".",
 
-    // Path Mapping: Mengarahkan semua import prisma ke folder generated
-    "paths": {
-      "@prisma/client": ["generated/prisma"],
-      "../../generated/prisma": ["generated/prisma"]
-    },
+    
+  
 
     // Environment Settings
     "module": "commonjs",

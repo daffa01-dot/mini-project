@@ -3,7 +3,7 @@ import prisma from "../configs/prisma-client.config";
 import { ResponseError } from "../utils/response-error.util";
 import { MailerUtil } from "../utils/mailer.util";
 import { TemplateUtil } from "../modules/template/template.util";
-import { Status } from "../../generated/prisma";
+import { Prisma, Status } from "@prisma/client";
 
 interface GetRiwayatProps {
   role: string;

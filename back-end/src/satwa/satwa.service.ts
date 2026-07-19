@@ -3,7 +3,7 @@ import { CloudinaryUtil } from "../utils/cloudinaryutil";
 import { ResponseError } from "../utils/response-error.util";
 import { StatusCodes } from "http-status-codes";
 import prisma from "../configs/prisma-client.config";
-import { Prisma } from "../../generated/prisma";
+import { Prisma } from "@prisma/client";
 
 export class SatwaService {
   static async getAllSatwa() {
@@ -72,20 +72,20 @@ export class SatwaService {
     );
     // Update
     console.log("validatedData:", validatedData);
-console.log("updateData:", updateData);
-console.log("BEFORE");
+    console.log("updateData:", updateData);
+    console.log("BEFORE");
 
-   const result = await prisma.satwa.update({
-  where: {
-    id: satwaId,
-  },
-  data: updateData,
-});
+    const result = await prisma.satwa.update({
+      where: {
+        id: satwaId,
+      },
+      data: updateData,
+    });
 
-console.log("RESULT");
-console.log(result);
+    console.log("RESULT");
+    console.log(result);
 
-return result;
+    return result;
   }
   static async deleteSatwa(userId: string, satwaId: string) {
     const shelter = await prisma.shelter.findFirst({ where: { userId } });
