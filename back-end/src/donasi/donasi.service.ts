@@ -48,11 +48,11 @@ export class DonasiService {
       );
     }
     console.log("CHECKOUT PAYLOAD", {
-  nominal,
-  satwaId,
-  shelterId,
-  donaturId,
-});
+      nominal,
+      satwaId,
+      shelterId,
+      donaturId,
+    });
 
     let targetShelterId = shelterId;
 
@@ -114,8 +114,47 @@ export class DonasiService {
         buktiResi: "",
       },
     });
-console.log("DONASI CREATED");
-console.log(donasi);
+    const donatur = await prisma.user.findUnique({
+      where: {
+        id: donaturId,
+      },
+    });
+
+    const satwa = satwaId
+      ? await prisma.satwa.findUnique({
+          where: {
+            id: satwaId,
+          },
+        })
+      : null;
+
+    if (donatur?.email) {
+      const htmlBody = TemplateUtil.getHtmlTemplate("donationmail", {
+        subject: "Invoice Donasi Teman Asuh",
+        namaDonatur: donatur.namaLengkap,
+        nominal: donasi.nominal.toLocaleString("id-ID"),
+        namaShelter: shelter.namaShelter,
+        namaSatwa: satwa?.nama ?? "-",
+        status: donasi.status,
+        catatan: catatan ?? "-",
+      });
+      console.log("=== MASUK KE SEND MAIL ===");
+console.log({
+  userId: donatur?.id,
+  email: donatur?.email,
+  donasiId: donasi.id,
+});
+
+      await MailerUtil.sendWithLog({
+        
+        userId: donatur.id,
+        emailTo: donatur.email,
+        subject: "Invoice Donasi Teman Asuh",
+        body: htmlBody,
+        referenceId: donasi.id,
+        type: "donasi_berhasil",
+      });
+    }
 
     return {
       donasiId: donasi.id,

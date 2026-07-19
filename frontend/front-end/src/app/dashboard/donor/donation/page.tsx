@@ -1,7 +1,6 @@
 "use client";
 
 import DonationTable from "@/components/dashboard/donation/DonationTable";
-
 import { useDonationHistory } from "@/hooks/useDonationHistory";
 
 export default function DonationHistoryPage() {
@@ -14,7 +13,7 @@ export default function DonationHistoryPage() {
   if (isLoading) {
     return (
       <main className="p-8">
-        Memuat riwayat donasi...
+        <p>Memuat riwayat donasi...</p>
       </main>
     );
   }
@@ -22,7 +21,7 @@ export default function DonationHistoryPage() {
   if (isError) {
     return (
       <main className="p-8">
-        Gagal memuat riwayat donasi.
+        <p>Terjadi kesalahan saat memuat data.</p>
       </main>
     );
   }

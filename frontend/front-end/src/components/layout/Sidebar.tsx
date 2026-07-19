@@ -58,9 +58,7 @@ export default function Sidebar() {
         {menus.map((menu) => {
 
           const Icon = menu.icon;
-console.log("USER:", User);
-console.log("ROLE:", User?.name);
-console.log("MENUS:", menus);
+
           return (
             <Link
               key={menu.href}
@@ -75,8 +73,10 @@ console.log("MENUS:", menus);
 
               {menu.title}
             </Link>
+            
           );
         })}
+        
       </nav>
 
       <div className="border-t p-6">
@@ -90,6 +90,7 @@ console.log("MENUS:", menus);
         </button>
 
       </div>
+      
     </aside>
   );
 }

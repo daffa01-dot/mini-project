@@ -1,34 +1,44 @@
+"use client";
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "react-toastify";
-import { getApiErrorMessage } from "@/lib/apiError";
-import { verifyDonation } from "@/services/donation.service";
+
 import { notify } from "@/lib/notify";
+import { getApiErrorMessage } from "@/lib/apiError";
+import { QUERY_KEYS } from "@/lib/queryKeys";
+
+import { verifyDonation } from "@/services/donation.service";
+
 export function useVerifyDonation() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ({
       donationId,
-      payload,
+      statusBaru,
+      alasanDitolak,
     }: {
       donationId: string;
+      statusBaru: "DIVERIFIKASI" | "DITOLAK";
+      alasanDitolak?: string;
+    }) =>
+      verifyDonation(donationId, {
+        statusBaru,
+        alasanDitolak,
+      }),
 
-      payload: {
-        statusBaru: "DIVERIFIKASI" | "DITOLAK";
-
-        alasanDitolak?: string;
-      };
-    }) => verifyDonation(donationId, payload),
-
-    onSuccess() {
-      notify.success("Donasi berhasil diverifikasi.");
+    onSuccess(_, variables) {
+      notify.success(
+        variables.statusBaru === "DIVERIFIKASI"
+          ? "Donasi berhasil diverifikasi."
+          : "Donasi berhasil ditolak."
+      );
 
       queryClient.invalidateQueries({
-        queryKey: ["donation-history"],
+        queryKey: QUERY_KEYS.dashboard,
       });
 
       queryClient.invalidateQueries({
-        queryKey: ["dashboard"],
+        queryKey: QUERY_KEYS.donationHistory,
       });
     },
 

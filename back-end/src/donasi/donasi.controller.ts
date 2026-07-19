@@ -13,8 +13,8 @@ export class DonasiController {
     try {
       const donaturId = res.locals.payload?.id;
       const { nominal, catatan, satwaId, shelterId } = req.body;
-console.log("CHECKOUT JWT");
-console.log(res.locals.payload);
+      console.log("CHECKOUT JWT");
+      console.log(res.locals.payload);
       const result = await DonasiService.createCheckout({
         nominal: Number(nominal),
         catatan,
@@ -47,7 +47,11 @@ console.log(res.locals.payload);
         });
       }
 
-      const buktiResiPath = file.path;
+      /**
+       * Simpan path yang bisa diakses browser,
+       * jangan simpan file.path (D:\....)
+       */
+      const buktiResiPath = `/uploads/resi/${file.filename}`;
 
       const result = await DonasiService.uploadBuktiResi({
         donasiId,
@@ -92,8 +96,7 @@ console.log(res.locals.payload);
   static async getRiwayat(req: Request, res: Response, next: NextFunction) {
     try {
       const payload = res.locals.payload;
-console.log("RIWAYAT JWT");
-console.log(res.locals.payload);
+
       const result = await DonasiService.getRiwayat({
         role: payload.role,
         userId: payload.id,
@@ -136,30 +139,26 @@ console.log(res.locals.payload);
       next(error);
     }
   }
-  static async getById(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) {
-  try {
-    const donasiId = req.params.donasiId;
+  static async getById(req: Request, res: Response, next: NextFunction) {
+    try {
+      const donasiId = req.params.donasiId;
 
-    if (!donasiId || Array.isArray(donasiId)) {
-      return res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: "Parameter donasiId tidak valid",
+      if (!donasiId || Array.isArray(donasiId)) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          success: false,
+          message: "Parameter donasiId tidak valid",
+        });
+      }
+
+      const result = await DonasiService.getById(donasiId);
+
+      return res.status(StatusCodes.OK).json({
+        success: true,
+        message: "Detail donasi berhasil diambil.",
+        data: result,
       });
+    } catch (error) {
+      next(error);
     }
-
-    const result = await DonasiService.getById(donasiId);
-
-    return res.status(StatusCodes.OK).json({
-      success: true,
-      message: "Detail donasi berhasil diambil.",
-      data: result,
-    });
-  } catch (error) {
-    next(error);
   }
-}
 }

@@ -9,6 +9,7 @@ import {
   FileText,
   User,
   LogOut,
+  Wallet,
 } from "lucide-react";
 
 import { useAuthStore } from "@/store/authstore";
@@ -41,6 +42,11 @@ export default function Sidebar() {
       title: "Dashboard",
       href: "/dashboard/shelter",
       icon: LayoutDashboard,
+    },
+    {
+      label: "Donasi Masuk",
+      href: "/dashboard/shelter/donations",
+      icon: Wallet,
     },
     {
       title: "Kelola Satwa",
@@ -81,15 +87,13 @@ export default function Sidebar() {
     user?.role === "DONATUR"
       ? donorMenus
       : user?.role === "SHELTER"
-      ? shelterMenus
-      : adminMenus;
+        ? shelterMenus
+        : adminMenus;
 
   return (
     <aside className="flex min-h-screen w-72 flex-col bg-white shadow-xl">
       <div className="border-b p-8">
-        <h1 className="text-3xl font-black text-green-600">
-          Teman Asuh
-        </h1>
+        <h1 className="text-3xl font-black text-green-600">Teman Asuh</h1>
       </div>
 
       <nav className="flex-1 space-y-2 p-5">

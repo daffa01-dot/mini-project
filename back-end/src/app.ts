@@ -24,6 +24,14 @@ app.use(
     credentials: true,
   }),
 );
+
+app.use(
+  "/uploads",
+  express.static(
+    path.join(process.cwd(), "public/uploads"),
+  ),
+);
+
 console.log("API_PREFIX =", API_PREFIX);
 app.use((req, _res, next) => {
   console.log(`${req.method} ${req.originalUrl}`);

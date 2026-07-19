@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Upload, Trash2, Eye } from "lucide-react";
-
+import { getImageUrl } from "@/lib/getImageUrl";
 import { Donation } from "@/types/donation";
 import DonationStatusBadge from "../common/donationStatusBadge";
 
@@ -68,7 +68,7 @@ export default function DonationRow({
       <td className="p-4">
         {donation.buktiResi ? (
           <a
-            href={donation.buktiResi}
+            href={getImageUrl(donation.buktiResi)}
             target="_blank"
             rel="noopener noreferrer"
             className="font-medium text-blue-600 hover:underline"
@@ -89,6 +89,14 @@ export default function DonationRow({
 
         {role === "DONATUR" && (
           <div className="flex flex-wrap gap-2">
+            <Link
+              href={`/dashboard/donor/donation/${donation.id}`}
+              className="inline-flex items-center gap-2 rounded-lg bg-slate-700 px-3 py-2 text-sm text-white transition hover:bg-slate-800"
+            >
+              <Eye size={16} />
+              Detail
+            </Link>
+
             {donation.status === "MENUNGGU" && !donation.buktiResi && (
               <button
                 onClick={() => onUpload?.(donation.id)}
@@ -108,7 +116,6 @@ export default function DonationRow({
             </button>
           </div>
         )}
-
         {/* SHELTER */}
 
         {role === "SHELTER" && (
