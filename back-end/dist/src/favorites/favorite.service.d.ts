@@ -19,12 +19,12 @@ export declare class FavoritesService {
             createdAt: Date;
             updatedAt: Date;
             deletedAt: Date | null;
-            status: import("@prisma/client").$Enums.StatusSatwa;
+            status: import(".prisma/client").$Enums.StatusSatwa;
             nama: string;
-            jenis: import("@prisma/client").$Enums.JenisSatwa;
+            jenis: import(".prisma/client").$Enums.JenisSatwa;
             ras: string | null;
             umur: number;
-            kelamin: import("@prisma/client").$Enums.KelaminSatwa;
+            kelamin: import(".prisma/client").$Enums.KelaminSatwa;
             foto: string | null;
             danaTerkumpul: number;
         }[];
@@ -38,7 +38,7 @@ export declare class FavoritesService {
             createdAt: Date;
             updatedAt: Date;
             deletedAt: Date | null;
-            status: import("@prisma/client").$Enums.Status;
+            status: import(".prisma/client").$Enums.Status;
             fotoBanner: string | null;
             isAktif: boolean;
             userId: string;

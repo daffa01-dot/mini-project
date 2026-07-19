@@ -27,7 +27,7 @@ export declare class DonasiService {
     static createCheckout({ nominal, catatan, donaturId, satwaId, shelterId, }: CreateCheckoutProps): Promise<{
         donasiId: string;
         nominal: number;
-        status: import("@prisma/client").$Enums.Status;
+        status: import(".prisma/client").$Enums.Status;
         rekeningTujuan: {
             namaShelter: string;
             noWhatsapp: string;
@@ -36,14 +36,14 @@ export declare class DonasiService {
     }>;
     static uploadBuktiResi({ donasiId, donaturId, buktiResiPath, }: UploadBuktiProps): Promise<{
         donasiId: string;
-        status: import("@prisma/client").$Enums.Status;
+        status: import(".prisma/client").$Enums.Status;
         buktiResi: string;
         message: string;
     }>;
     static verifikasiDonasi({ userId, donasiId, statusBaru, alasanDitolak, }: VerifikasiDonasiProps): Promise<{
         donasiId: string;
         nominal: number;
-        statusBaru: import("@prisma/client").$Enums.Status;
+        statusBaru: import(".prisma/client").$Enums.Status;
         alasanDitolak: string | null;
         diverifikasiAt: Date | null;
     }>;
@@ -68,7 +68,7 @@ export declare class DonasiService {
         createdAt: Date;
         updatedAt: Date;
         deletedAt: Date | null;
-        status: import("@prisma/client").$Enums.Status;
+        status: import(".prisma/client").$Enums.Status;
         donaturId: string;
         nominal: number;
         satwaId: string | null;
@@ -83,7 +83,7 @@ export declare class DonasiService {
         createdAt: Date;
         updatedAt: Date;
         deletedAt: Date | null;
-        status: import("@prisma/client").$Enums.Status;
+        status: import(".prisma/client").$Enums.Status;
         donaturId: string;
         nominal: number;
         satwaId: string | null;
@@ -103,7 +103,7 @@ export declare class DonasiService {
             createdAt: Date;
             updatedAt: Date;
             deletedAt: Date | null;
-            status: import("@prisma/client").$Enums.Status;
+            status: import(".prisma/client").$Enums.Status;
             fotoBanner: string | null;
             isAktif: boolean;
             userId: string;
@@ -115,19 +115,19 @@ export declare class DonasiService {
             createdAt: Date;
             updatedAt: Date;
             deletedAt: Date | null;
-            status: import("@prisma/client").$Enums.StatusSatwa;
+            status: import(".prisma/client").$Enums.StatusSatwa;
             nama: string;
-            jenis: import("@prisma/client").$Enums.JenisSatwa;
+            jenis: import(".prisma/client").$Enums.JenisSatwa;
             ras: string | null;
             umur: number;
-            kelamin: import("@prisma/client").$Enums.KelaminSatwa;
+            kelamin: import(".prisma/client").$Enums.KelaminSatwa;
             foto: string | null;
             danaTerkumpul: number;
         } | null;
         donatur: {
             id: string;
             email: string;
-            role: import("@prisma/client").$Enums.Role;
+            role: import(".prisma/client").$Enums.Role;
             password: string;
             namaLengkap: string;
             noWhatsapp: string | null;
@@ -141,7 +141,7 @@ export declare class DonasiService {
         createdAt: Date;
         updatedAt: Date;
         deletedAt: Date | null;
-        status: import("@prisma/client").$Enums.Status;
+        status: import(".prisma/client").$Enums.Status;
         donaturId: string;
         nominal: number;
         satwaId: string | null;

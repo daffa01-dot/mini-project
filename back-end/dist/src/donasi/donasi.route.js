@@ -17,7 +17,7 @@ const authorizeShelterOrAdmin = auth_middleware_1.AuthMiddleware.authorized([
     "SHELTER",
 ]);
 // 2. PERBAIKAN: Buat instansiasi khusus untuk donasi menggunakan 'diskStorage' dengan batas file 2MB
-const donasiUpload = new multerMiddleware_1.MulterMiddleware("diskStorage").upload(2 * 1024 * 1024);
+const multerMiddleware = new multerMiddleware_1.MulterMiddleware();
 // =========================================================================
 // REGISTER ENDPOINTS
 // =========================================================================
@@ -25,7 +25,7 @@ router.post("/checkout", auth, donasi_controller_1.DonasiController.checkout);
 // Endpoint 2: Upload Bukti (Hanya user yang sudah login/authenticated)
 router.patch("/:donasiId/upload-bukti", auth, 
 // 3. PERBAIKAN: Ganti variabel lama 'upload' menjadi 'donasiUpload'
-donasiUpload.single("buktiResi"), donasi_controller_1.DonasiController.uploadBukti);
+multerMiddleware_1.uploadImage.single("buktiResi"), donasi_controller_1.DonasiController.uploadBukti);
 // 🔴 REVISI UTAMA: Tambahkan 'authorizeShelterOrAdmin' setelah 'auth'
 // Ini mencegah Donatur biasa atau pihak luar menembak API verifikasi untuk mengubah status donasi secara ilegal
 router.patch("/:donasiId/verifikasi", auth, authorizeShelterOrAdmin, donasi_controller_1.DonasiController.verifikasi);

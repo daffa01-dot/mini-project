@@ -4,7 +4,7 @@ export declare class DonaturService {
     }): Promise<{
         id: string;
         email: string;
-        role: import("@prisma/client").$Enums.Role;
+        role: import(".prisma/client").$Enums.Role;
         namaLengkap: string;
         noWhatsapp: string | null;
         createdAt: Date;
@@ -17,7 +17,7 @@ export declare class DonaturService {
         safeUser: {
             id: string;
             email: string;
-            role: import("@prisma/client").$Enums.Role;
+            role: import(".prisma/client").$Enums.Role;
             namaLengkap: string;
             noWhatsapp: string | null;
             createdAt: Date;
@@ -29,7 +29,7 @@ export declare class DonaturService {
     static getProfile(userId: string): Promise<{
         id: string;
         email: string;
-        role: import("@prisma/client").$Enums.Role;
+        role: import(".prisma/client").$Enums.Role;
         namaLengkap: string;
         noWhatsapp: string | null;
         createdAt: Date;

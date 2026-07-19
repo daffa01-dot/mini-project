@@ -2,7 +2,7 @@ import { Request, Response, NextFunction, Router } from "express";
 import { DonasiController } from "./donasi.controller";
 import { AuthMiddleware } from "../middlewares/auth.middleware";
 // 1. PERBAIKAN: Import MulterMiddleware berbentuk Class (bukan variabel 'upload' lagi)
-import { MulterMiddleware } from "../middlewares/multerMiddleware";
+import { MulterMiddleware, uploadImage } from "../middlewares/multerMiddleware";
 
 const router = Router();
 
@@ -20,9 +20,7 @@ const authorizeShelterOrAdmin = AuthMiddleware.authorized([
 ]);
 
 // 2. PERBAIKAN: Buat instansiasi khusus untuk donasi menggunakan 'diskStorage' dengan batas file 2MB
-const donasiUpload = new MulterMiddleware("diskStorage").upload(
-  2 * 1024 * 1024,
-);
+const multerMiddleware = new MulterMiddleware();
 
 // =========================================================================
 // REGISTER ENDPOINTS
@@ -35,7 +33,7 @@ router.patch(
   "/:donasiId/upload-bukti",
   auth,
   // 3. PERBAIKAN: Ganti variabel lama 'upload' menjadi 'donasiUpload'
-  donasiUpload.single("buktiResi"),
+  uploadImage.single("buktiResi"),
 
   DonasiController.uploadBukti,
 );

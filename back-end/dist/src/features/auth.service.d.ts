@@ -5,7 +5,7 @@ export declare class AuthService {
     }): Promise<{
         id: string;
         email: string;
-        role: import("@prisma/client").$Enums.Role;
+        role: import(".prisma/client").$Enums.Role;
         namaLengkap: string;
         noWhatsapp: string | null;
         createdAt: Date;
@@ -26,14 +26,14 @@ export declare class AuthService {
                 createdAt: Date;
                 updatedAt: Date;
                 deletedAt: Date | null;
-                status: import("@prisma/client").$Enums.Status;
+                status: import(".prisma/client").$Enums.Status;
                 fotoBanner: string | null;
                 isAktif: boolean;
                 userId: string;
             } | null;
             id: string;
             email: string;
-            role: import("@prisma/client").$Enums.Role;
+            role: import(".prisma/client").$Enums.Role;
             namaLengkap: string;
             noWhatsapp: string | null;
             createdAt: Date;
@@ -45,7 +45,7 @@ export declare class AuthService {
     static me(userId: string): Promise<{
         id: string;
         email: string;
-        role: import("@prisma/client").$Enums.Role;
+        role: import(".prisma/client").$Enums.Role;
         namaLengkap: string;
         noWhatsapp: string | null;
         shelter: {
