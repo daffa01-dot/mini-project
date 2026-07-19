@@ -1,67 +1,82 @@
-import express, { NextFunction, Request, Response } from 'express';
-import cors from 'cors';
-import cookieParser from 'cookie-parser';
-import path from 'path';
-import { StatusCodes } from 'http-status-codes';
-import authRoute from './features/auth.route';
-import donaturRouter from './donatur/donatur-route';
-import donasiRouter from './donasi/donasi.route'; // 1. IMPORT ROUTER DONASI BARU
-// Impor konfigurasi dari file env config Anda
-import { PORT, API_PREFIX, WHITE_LIST } from './configs/env.configs';
+import express, { NextFunction, Request, Response } from "express";
+
+import cors from "cors";
+import cookieParser from "cookie-parser";
+import path from "path";
+import { StatusCodes } from "http-status-codes";
+import authRoute from "./features/auth.route";
+import donaturRouter from "./donatur/donatur-route";
+import donasiRouter from "./donasi/donasi.route";
+import laporanRouter from "./laporan/laporan.route";
+import router from "./satwa/satwa.route";
+import dashboardRouter from "./dashboard/dashboard.route";
+import shelterRouter from "./shelter/shelter.route";
+import { PORT, API_PREFIX, WHITE_LIST } from "./configs/env.configs";
+
 
 const app = express();
 
-// 1. Konfigurasi Middleware CORS
 app.use(
   cors({
-    origin: WHITE_LIST, // Menerima array dari configs/env.config
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true, // Izinkan pengiriman cookie/token dari frontend
+    origin: WHITE_LIST,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
   }),
 );
 
-// 2. Middleware Parser bawaan Express & Cookie
-app.use(express.json());
-app.use(cookieParser());
+app.use(
+  "/uploads",
+  express.static(
+    path.join(process.cwd(), "public/uploads"),
+  ),
+);
 
-// 3. Pendaftaran Route Fitur (Menggunakan API_PREFIX)
+console.log("API_PREFIX =", API_PREFIX);
+app.use((req, _res, next) => {
+  console.log(`${req.method} ${req.originalUrl}`);
+  next();
+});
+app.use(express.json());
+app.get("/tes", (_req, res) => {
+  res.json({ ok: true });
+});
+app.use(cookieParser());
+app.get("/tes", (_req, res) => {
+  res.json({ ok: true });
+});
 app.use(`${API_PREFIX}/auth`, authRoute);
 app.use(`${API_PREFIX}/donatur`, donaturRouter);
-app.use(`${API_PREFIX}/donasi`, donasiRouter); // 2. DAFTARKAN ROUTER DONASI DI SINI
+app.use(`${API_PREFIX}/donasi`, donasiRouter);
+app.use(`${API_PREFIX}/laporan`, laporanRouter);
+app.use(`${API_PREFIX}/satwa`, router);
+app.use("/api/v1/dashboard", dashboardRouter);
+app.use("/api/v1/shelter", shelterRouter);
 
-// 4. Akses File Static (Untuk file upload seperti gambar/dokumen)
 app.use(
   `${API_PREFIX}/src/uploads`,
-  express.static(path.join(__dirname, 'uploads')),
+  express.static(path.join(__dirname, "uploads")),
 );
 
-// 3. AKSES FILE STATIC KHUSUS RESI TRANSFER MANUAL (Agar gambar resi bisa diakses via browser)
-// URL aksesnya nanti akan menjadi: http://localhost:PORT/api/v1/uploads/resi/nama-file.png
 app.use(
   `${API_PREFIX}/uploads`,
-  express.static(path.join(process.cwd(), 'public/uploads')),
+  express.static(path.join(process.cwd(), "public/uploads")),
 );
 
-// 5. Endpoint Uji Coba Base (Ping-Pong)
-app.get('/ping', (_: Request, res: Response) => {
-  res.status(StatusCodes.OK).json({ message: 'pong' });
+app.get("/ping", (_: Request, res: Response) => {
+  res.status(StatusCodes.OK).json({ message: "pong" });
 });
 
-// 6. Global Error Handling Middleware
 app.use((err: any, _: Request, res: Response, __: NextFunction) => {
   res.status(err?.status || StatusCodes.INTERNAL_SERVER_ERROR).json({
     success: false,
-    message: err?.message || 'Internal Server Error',
+    message: err?.message || "Internal Server Error",
     data: null,
   });
 });
 
-// 7. Menjalankan Server (Pastikan NODE_ENV di .env adalah "development")
-if (process.env.NODE_ENV === 'Mini-Project') {
-  app.listen(PORT, () => {
-    console.log(`[⚡APP] Application is running on port: ${PORT}`);
-  });
-}
+app.listen(PORT, () => {
+  console.log(`[⚡APP] Application is running on port: ${PORT}`);
+});
 
 export default app;

@@ -1,20 +1,36 @@
-import { StatusCodes } from 'http-status-codes'
-import { ZodType } from 'zod'
-import { ResponseError } from '../utils/response-error.util'
-import { z } from "zod";
+import { Request, Response, NextFunction } from "express";
+import { ZodTypeAny, ZodError } from "zod";
+import { StatusCodes } from "http-status-codes";
 
-export function validate<T>(schema: ZodType<T>, data: unknown): T {
-  const result = schema.safeParse(data)
+export const validate = (schema: ZodTypeAny) => {
+  return async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      await schema.parseAsync({
+        body: req.body,
+        query: req.query,
+        params: req.params,
+      });
 
-  if (!result.success) {
-    throw new ResponseError(
-      StatusCodes.BAD_REQUEST,
-      result.error.issues.map((issue) => issue.message).join(', ')
-    )
-  }
+      return next();
+    } catch (error) {
+      if (error instanceof ZodError) {
+        res.status(StatusCodes.BAD_REQUEST).json({
+          success: false,
+          message: "Validasi data gagal",
+          errors: error.format(),
+        });
+        return;
+      }
 
-  return result.data
-}
-
-
-  
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: "Terjadi kesalahan pada server internal",
+      });
+      return;
+    }
+  };
+};
