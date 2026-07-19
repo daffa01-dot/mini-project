@@ -1,7 +1,7 @@
 "use client";
 
 import { Trash2 } from "lucide-react";
-import { useDeleteSatwa } from "@/hooks/useDeleteSatwal";
+import { useDeleteSatwa } from "@/hooks/useDeleteSatwa";
 
 
 interface Props {
