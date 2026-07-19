@@ -1,19 +1,20 @@
 {
-  // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
     // File Layout
     "rootDir": "./",
     "outDir": "./dist",
+    "baseUrl": ".",
+
+    // Path Mapping: Mengarahkan semua import prisma ke folder generated
+    "paths": {
+      "@prisma/client": ["generated/prisma"],
+      "../../generated/prisma": ["generated/prisma"]
+    },
 
     // Environment Settings
-    // See also https://aka.ms/tsconfig/module
     "module": "commonjs",
     "target": "ES6",
     "types": [],
-    // For nodejs:
-    // "lib": ["esnext"],
-    // "types": ["node"],
-    // and npm install -D @types/node
 
     // Other Outputs
     "sourceMap": true,
@@ -21,19 +22,12 @@
     "declarationMap": true,
 
     // Stricter Typechecking Options
+    "strict": true,
+    "noImplicitAny": false, 
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
 
-    // Style Options
-    // "noImplicitReturns": true,
-    // "noImplicitOverride": true,
-    // "noUnusedLocals": true,
-    // "noUnusedParameters": true,
-    // "noFallthroughCasesInSwitch": true,
-    // "noPropertyAccessFromIndexSignature": true,
-
     // Recommended Options
-    "strict": true,
     "jsx": "react-jsx",
     "verbatimModuleSyntax": false,
     "isolatedModules": true,

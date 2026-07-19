@@ -135,7 +135,7 @@ return result;
       );
     }
 
-    let fotoUrl = null;
+    let fotoUrl: string | null = null;
     if (file) {
       fotoUrl = await CloudinaryUtil.uploadBuffer(file.buffer, "hewan_photos");
     }

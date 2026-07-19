@@ -9,9 +9,10 @@ export class AuthMiddleware {
     return (req: Request, res: Response, next: NextFunction) => {
       try {
         console.log("DEBUG URL:", req.originalUrl);
-        let token = null;
+        let token: string | null | undefined;
 
         const authHeader = req.headers.authorization;
+
         if (authHeader && authHeader.startsWith("Bearer ")) {
           token = authHeader.split(" ")[1];
         } else if (req.cookies && req.cookies.token) {
