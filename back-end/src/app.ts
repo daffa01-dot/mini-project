@@ -75,8 +75,6 @@ app.use((err: any, _: Request, res: Response, __: NextFunction) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`[⚡APP] Application is running on port: ${PORT}`);
-});
+
 
 export default app;
