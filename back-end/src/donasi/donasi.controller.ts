@@ -13,8 +13,7 @@ export class DonasiController {
     try {
       const donaturId = res.locals.payload?.id;
       const { nominal, catatan, satwaId, shelterId } = req.body;
-      console.log("CHECKOUT JWT");
-      console.log(res.locals.payload);
+
       const result = await DonasiService.createCheckout({
         nominal: Number(nominal),
         catatan,
@@ -29,6 +28,7 @@ export class DonasiController {
         data: result,
       });
     } catch (error) {
+       console.error("CHECKOUT ERROR:", error);
       next(error);
     }
   }
