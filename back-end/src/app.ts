@@ -17,6 +17,11 @@ import { PORT, API_PREFIX, WHITE_LIST } from "./configs/env.configs";
 const app = express();
 console.log("API_PREFIX =", API_PREFIX);
 console.log("WHITE_LIST =", WHITE_LIST);
+app.use((req, res, next) => {
+  console.log("==== REQUEST MASUK ====");
+  console.log(req.method, req.originalUrl);
+  next();
+});
 
 app.get("/debug", (_req, res) => {
   res.json({
@@ -32,6 +37,7 @@ app.use(
     credentials: true,
   }),
 );
+
 
 app.use(
   "/uploads",
