@@ -29,37 +29,33 @@ export class AuthController {
     }
   }
 
-  static async login(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
-  try {
-    const body = req.body;
+  static async login(req: Request, res: Response, next: NextFunction) {
+    try {
+      const body = req.body;
 
-    const { safeUser, token } =
-      await AuthService.login({ body });
+      const { safeUser, token } = await AuthService.login({ body });
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+      const isProd = process.env.NODE_ENV === "production";
 
-    return res.status(StatusCodes.OK).json({
-      success: true,
-      message: "Login berhasil",
-      data: {
-        token,
-        user: safeUser,
-      },
-    });
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: isProd,
+        sameSite: isProd ? "none" : "lax",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
 
-  } catch (error) {
-    next(error);
+      return res.status(StatusCodes.OK).json({
+        success: true,
+        message: "Login berhasil",
+        data: {
+          token,
+          user: safeUser,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
   }
-}
   static async logout(req: Request, res: Response, next: NextFunction) {
     try {
       res.clearCookie("token", {
@@ -77,21 +73,21 @@ export class AuthController {
     }
   }
   static async me(req: Request, res: Response) {
-  const payload = res.locals.payload;
+    const payload = res.locals.payload;
 
-  const user = await prisma.user.findUnique({
-    where: { id: payload.id },
-    select: {
-      id: true,
-      namaLengkap: true,
-      email: true,
-      role: true,
-    },
-  });
+    const user = await prisma.user.findUnique({
+      where: { id: payload.id },
+      select: {
+        id: true,
+        namaLengkap: true,
+        email: true,
+        role: true,
+      },
+    });
 
-  return res.json({
-    success: true,
-    data: user,
-  });
-}
+    return res.json({
+      success: true,
+      data: user,
+    });
+  }
 }
