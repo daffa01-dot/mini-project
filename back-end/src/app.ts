@@ -15,7 +15,15 @@ import { PORT, API_PREFIX, WHITE_LIST } from "./configs/env.configs";
 
 
 const app = express();
+console.log("API_PREFIX =", API_PREFIX);
+console.log("WHITE_LIST =", WHITE_LIST);
 
+app.get("/debug", (_req, res) => {
+  res.json({
+    apiPrefix: API_PREFIX,
+    whiteList: WHITE_LIST,
+  });
+});
 app.use(
   cors({
     origin: WHITE_LIST,
