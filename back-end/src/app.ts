@@ -15,6 +15,11 @@ import shelterRouter from "./shelter/shelter.route";
 import { WHITE_LIST } from "./configs/env.configs";
 
 const app = express();
+app.get("/api/v1/test", (_req, res) => {
+  res.json({
+    ok: true,
+  });
+});
 
 console.log("WHITE_LIST =", WHITE_LIST);
 
