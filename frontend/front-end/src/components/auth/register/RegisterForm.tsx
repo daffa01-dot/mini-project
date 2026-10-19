@@ -61,17 +61,11 @@ export default function RegisterForm() {
   const mutation = useRegister();
 
   const onSubmit = (data: RegisterType) => {
-    console.log("FORM SUBMIT", {
-      ...data,
-      role,
-    });
-
     mutation.mutate({
       ...data,
       role,
     });
   };
-  console.log(errors);
 
   return (
     <div className="w-full max-w-xl rounded-3xl bg-white p-10 shadow-xl">

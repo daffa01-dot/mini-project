@@ -30,9 +30,8 @@ export function useUploadReceipt() {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.donationHistory,
       });
-
-      // sementara kembali ke dashboard donor
-      router.push("/dashboard/donor");
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.donation });
+      router.push("/dashboard/donor/donation");
     },
 
     onError(error) {

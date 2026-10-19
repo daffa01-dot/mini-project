@@ -34,7 +34,6 @@ export default function SatwaDetailPage() {
       </div>
     );
   }
-console.log("SATWA:", satwa);
   return (
     <main className="mx-auto max-w-7xl space-y-8 p-8">
       <SatwaHero satwa={satwa} />

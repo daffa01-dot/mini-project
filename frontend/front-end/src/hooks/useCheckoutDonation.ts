@@ -20,7 +20,6 @@ export function useCheckoutDonation() {
         checkoutDonation(payload),
 
     onSuccess(data) {
-        console.log("CHECKOUT FRONTEND:", data);
       notify.success("Checkout berhasil");
 
       queryClient.invalidateQueries({
@@ -31,7 +30,7 @@ export function useCheckoutDonation() {
         queryKey: QUERY_KEYS.donationHistory,
       });
 
-      router.push(`/dashboard/donor/donation/upload?id=${data.donasiId}`);
+      router.push(`/checkout/transfer?id=${data.donasiId}`);
     },
 
     onError(error) {

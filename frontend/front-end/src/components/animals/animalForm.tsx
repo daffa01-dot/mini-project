@@ -53,7 +53,6 @@ export default function AnimalForm({ animalId }: Props) {
     }
 
     if (animalId) {
-      console.log("UPDATE");
 
       updateAnimal.mutate({
         id: animalId,
@@ -63,7 +62,6 @@ export default function AnimalForm({ animalId }: Props) {
       return;
     }
 
-    console.log("CREATE");
 
     createAnimal.mutate(formData);
   };

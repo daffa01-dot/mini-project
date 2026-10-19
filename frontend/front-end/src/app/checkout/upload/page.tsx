@@ -1,11 +1,16 @@
-import UploadReceipt from "@/components/dashboard/donation/UploadReceipt"
+"use client";
+
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import UploadReceipt from "@/components/dashboard/donation/UploadReceipt";
+
+function UploadContent() {
+  const params = useSearchParams();
+  const donationId = params.get("id") ?? "";
+  if (!donationId) return <main className="p-8 text-center">ID donasi tidak ditemukan. Buka unggah bukti melalui detail donasi.</main>;
+  return <main className="min-h-screen bg-slate-50 px-4 py-12"><UploadReceipt donationId={donationId} /></main>;
+}
 
 export default function UploadPage() {
-  return (
-    <main className="min-h-screen bg-slate-100 py-12">
-      <div className="mx-auto max-w-3xl">
-        {/* <UploadReceipt /> */}
-      </div>
-    </main>
-  );
+  return <Suspense fallback={<main className="p-8 text-center">Memuat halaman unggah bukti...</main>}><UploadContent /></Suspense>;
 }

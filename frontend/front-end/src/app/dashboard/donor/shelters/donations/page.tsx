@@ -1,13 +1,11 @@
 "use client";
-console.log("SHELTER DONATION PAGE");
 import DonationTable from "@/components/dashboard/donation/DonationTable";
 
 import { useDonationHistory } from "@/hooks/useDonationHistory";
 import { useVerifyDonation } from "@/hooks/useVerifyDonation";
 
 export default function DonationPage() {
-  console.log("SHELTER DONATION PAGE");
-  const { data = [], isLoading } = useDonationHistory();
+    const { data = [], isLoading } = useDonationHistory();
 
   const verifyDonation = useVerifyDonation();
 
@@ -29,9 +27,6 @@ export default function DonationPage() {
         role="SHELTER"
         data={data}
         onApprove={(id) => {
-          console.log("PAGE", id);
-          alert("PAGE");
-
           verifyDonation.mutate({
             donationId: id,
             statusBaru: "DIVERIFIKASI",
