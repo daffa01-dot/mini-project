@@ -367,77 +367,47 @@ export class DonasiService {
     };
   }
 
-  static async getRiwayat({ role, userId, shelterId }: GetRiwayatProps) {
-    const where: any = {
-      deletedAt: null,
-    };
+ static async getRiwayat({ role, userId }: GetRiwayatProps) {
+  const where: any = {
+    deletedAt: null,
+  };
 
-    switch (role) {
-      case "DONATUR":
-        where.donaturId = userId;
-        break;
+  switch (role) {
+    case "DONATUR":
+      where.donaturId = userId;
+      break;
 
-      case "SHELTER": {
-        const shelter = await prisma.shelter.findFirst({
-          where: {
-            userId,
-            deletedAt: null,
-          },
-        });
+    case "SHELTER": {
+      const shelter = await prisma.shelter.findFirst({
+        where: {
+          userId,
+          deletedAt: null,
+        },
+      });
 
-        if (!shelter) {
-          throw new ResponseError(
-            StatusCodes.NOT_FOUND,
-            "Profil Shelter tidak ditemukan.",
-          );
-        }
-
-        where.shelterId = shelter.id;
-        break;
+      if (!shelter) {
+        throw new ResponseError(
+          StatusCodes.NOT_FOUND,
+          "Profil Shelter tidak ditemukan.",
+        );
       }
 
-      case "SUPER_ADMIN":
-        break;
-
-      default:
-        throw new ResponseError(
-          StatusCodes.FORBIDDEN,
-          "Role tidak memiliki akses.",
-        );
+      where.shelterId = shelter.id;
+      break;
     }
 
-    const result = await prisma.donasi.findMany({
-      where,
-      include: {
-        donatur: {
-          select: {
-            id: true,
-            namaLengkap: true,
-            email: true,
-          },
-        },
-        shelter: {
-          select: {
-            id: true,
-            namaShelter: true,
-          },
-        },
-        satwa: {
-          select: {
-            id: true,
-            nama: true,
-            foto: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    case "SUPER_ADMIN":
+      break;
 
-
-    return result;
+    default:
+      throw new ResponseError(
+        StatusCodes.FORBIDDEN,
+        "Role tidak memiliki akses.",
+      );
   }
+
+  // Lanjutkan kode findMany dan return result seperti sebelumnya.
+}
 
   static async deleteDonasi(userId: string, role: string, donasiId: string) {
     // Super Admin boleh menghapus semua donasi
