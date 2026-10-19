@@ -71,9 +71,6 @@ export class SatwaService {
       }).filter(([, value]) => value !== undefined),
     );
     // Update
-    console.log("validatedData:", validatedData);
-    console.log("updateData:", updateData);
-    console.log("BEFORE");
 
     const result = await prisma.satwa.update({
       where: {
@@ -82,8 +79,6 @@ export class SatwaService {
       data: updateData,
     });
 
-    console.log("RESULT");
-    console.log(result);
 
     return result;
   }

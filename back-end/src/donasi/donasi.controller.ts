@@ -2,24 +2,21 @@ import { NextFunction, Request, Response } from "express";
 import { DonasiService } from "./donasi.service";
 import { StatusCodes } from "http-status-codes";
 
-type GetRiwayatProps = {
-  role: string;
-  userId?: string;
-  shelterId?: string;
-};
-
 export class DonasiController {
   static async checkout(req: Request, res: Response, next: NextFunction) {
     try {
       const donaturId = res.locals.payload?.id;
       const { nominal, catatan, satwaId, shelterId } = req.body;
 
+      if (!donaturId) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({ success: false, message: "Sesi pengguna tidak valid." });
+      }
       const result = await DonasiService.createCheckout({
         nominal: Number(nominal),
-        catatan,
-        satwaId,
-        shelterId,
-        donaturId: donaturId,
+        donaturId,
+        ...(typeof catatan === "string" ? { catatan } : {}),
+        ...(typeof satwaId === "string" ? { satwaId } : {}),
+        ...(typeof shelterId === "string" ? { shelterId } : {}),
       });
 
       return res.status(StatusCodes.CREATED).json({
@@ -28,7 +25,6 @@ export class DonasiController {
         data: result,
       });
     } catch (error) {
-       console.error("CHECKOUT ERROR:", error);
       next(error);
     }
   }
@@ -47,16 +43,13 @@ export class DonasiController {
         });
       }
 
-      /**
-       * Simpan path yang bisa diakses browser,
-       * jangan simpan file.path (D:\....)
-       */
-      const buktiResiPath = `/uploads/resi/${file.filename}`;
-
+      if (!["image/jpeg", "image/png"].includes(file.mimetype)) {
+        return res.status(StatusCodes.BAD_REQUEST).json({ success: false, message: "Bukti transfer harus berupa gambar JPG atau PNG." });
+      }
       const result = await DonasiService.uploadBuktiResi({
         donasiId,
         donaturId: userId,
-        buktiResiPath,
+        buktiResiBuffer: file.buffer,
       });
 
       return res.status(StatusCodes.OK).json({
@@ -100,7 +93,6 @@ export class DonasiController {
       const result = await DonasiService.getRiwayat({
         role: payload.role,
         userId: payload.id,
-        shelterId: payload.shelterId,
       });
 
       return res.status(StatusCodes.OK).json({
@@ -150,7 +142,8 @@ export class DonasiController {
         });
       }
 
-      const result = await DonasiService.getById(donasiId);
+      const payload = res.locals.payload;
+      const result = await DonasiService.getById(donasiId, payload.id, payload.role);
 
       return res.status(StatusCodes.OK).json({
         success: true,

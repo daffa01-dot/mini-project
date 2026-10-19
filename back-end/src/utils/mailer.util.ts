@@ -74,9 +74,6 @@ export class MailerUtil {
             },
           });
         }
-        console.log(
-          `[Mailer Success]: Email notifikasi berhasil dikirim ke ${emailTo}`,
-        );
       })
       .catch(async (smtpError: any) => {
         if (logRecord) {

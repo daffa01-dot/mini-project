@@ -5,9 +5,10 @@ export const checkoutDonasiFormSchema = z.object({
   .number({
     message: "Nominal donasi harus berupa angka murni",
   })
+  .int('Nominal donasi harus berupa bilangan bulat')
   .min(10000, 'Minimal melakukan donasi adalah Rp 10.000'),
 
-  catatan: z.string().trim().optional(),
+  catatan: z.string().trim().max(1000, 'Catatan maksimal 1000 karakter').optional(),
 
   satwaId: z
     .string()

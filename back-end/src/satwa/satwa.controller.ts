@@ -67,8 +67,6 @@ export class SatwaController {
     } catch (error) {
       next(error);
     }
-    console.log("UPDATE RESULT:", "data.id");
-console.log("UPDATE RESULT:", "data.nama");
   }
 
   static async remove(req: Request, res: Response, next: NextFunction) {

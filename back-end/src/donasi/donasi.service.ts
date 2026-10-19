@@ -4,11 +4,11 @@ import { ResponseError } from "../utils/response-error.util";
 import { MailerUtil } from "../utils/mailer.util";
 import { TemplateUtil } from "../modules/template/template.util";
 import { Prisma, Status } from "@prisma/client";
+import { CloudinaryUtil } from "../utils/cloudinaryutil";
 
 interface GetRiwayatProps {
   role: string;
   userId: string;
-  shelterId?: string;
 }
 
 interface CreateCheckoutProps {
@@ -22,7 +22,7 @@ interface CreateCheckoutProps {
 interface UploadBuktiProps {
   donasiId: string;
   donaturId: string;
-  buktiResiPath: string;
+  buktiResiBuffer: Buffer;
 }
 
 type VerifikasiDonasiProps = {
@@ -47,12 +47,6 @@ export class DonasiService {
         "Minimal donasi adalah Rp10.000",
       );
     }
-    console.log("CHECKOUT PAYLOAD", {
-      nominal,
-      satwaId,
-      shelterId,
-      donaturId,
-    });
 
     let targetShelterId = shelterId;
 
@@ -101,7 +95,6 @@ export class DonasiService {
         "Shelter tidak ditemukan.",
       );
     }
-    console.log("CREATE DONASI");
 
     const donasi = await prisma.donasi.create({
       data: {
@@ -175,7 +168,7 @@ export class DonasiService {
   static async uploadBuktiResi({
     donasiId,
     donaturId,
-    buktiResiPath,
+    buktiResiBuffer,
   }: UploadBuktiProps) {
     const donasi = await prisma.donasi.findFirst({
       where: {
@@ -208,13 +201,13 @@ export class DonasiService {
       );
     }
 
+    const buktiResiPath = await CloudinaryUtil.uploadBuffer(
+      buktiResiBuffer,
+      "temanasuh/bukti-transfer",
+    );
     const updated = await prisma.donasi.update({
-      where: {
-        id: donasiId,
-      },
-      data: {
-        buktiResi: buktiResiPath,
-      },
+      where: { id: donasiId },
+      data: { buktiResi: buktiResiPath },
     });
 
     return {
@@ -412,9 +405,6 @@ export class DonasiService {
           "Role tidak memiliki akses.",
         );
     }
-    console.log("ROLE:", role);
-    console.log("USER:", userId);
-    console.log("SHELTER:", shelterId);
 
     const result = await prisma.donasi.findMany({
       where,
@@ -445,9 +435,6 @@ export class DonasiService {
       },
     });
 
-    console.log("WHERE:", where);
-    console.log("TOTAL DONASI:", result.length);
-    console.log("RESULT:", result);
 
     return result;
   }
@@ -535,15 +522,21 @@ export class DonasiService {
       },
     });
   }
-  static async getById(donasiId: string) {
+  static async getById(donasiId: string, userId: string, role: string) {
+    const where: Prisma.DonasiWhereInput = { id: donasiId, deletedAt: null };
+    if (role === "DONATUR") where.donaturId = userId;
+    else if (role === "SHELTER") {
+      const shelter = await prisma.shelter.findFirst({ where: { userId, deletedAt: null }, select: { id: true } });
+      if (!shelter) throw new ResponseError(StatusCodes.NOT_FOUND, "Profil Shelter tidak ditemukan.");
+      where.shelterId = shelter.id;
+    } else if (role !== "SUPER_ADMIN") {
+      throw new ResponseError(StatusCodes.FORBIDDEN, "Role tidak memiliki akses.");
+    }
     const donasi = await prisma.donasi.findFirst({
-      where: {
-        id: donasiId,
-        deletedAt: null,
-      },
+      where,
       include: {
-        donatur: true,
-        shelter: true,
+        donatur: { select: { id: true, namaLengkap: true, email: true } },
+        shelter: { include: { rekening: true } },
         satwa: true,
       },
     });

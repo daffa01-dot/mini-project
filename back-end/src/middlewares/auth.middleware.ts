@@ -8,7 +8,6 @@ export class AuthMiddleware {
   static authenticated(secretKey: string) {
     return (req: Request, res: Response, next: NextFunction) => {
       try {
-        console.log("DEBUG URL:", req.originalUrl);
         let token: string | null | undefined;
 
         const authHeader = req.headers.authorization;
@@ -27,7 +26,6 @@ export class AuthMiddleware {
         }
 
         const payload = JWTUtil.verifyToken(token);
-        console.log("PAYLOAD JWT:", payload);
 
         res.locals.payload = payload;
         next();
