@@ -27,7 +27,7 @@ export default function Sidebar() {
     },
     {
       title: "Riwayat Donasi",
-      href: "/dashboard/donor/donations",
+      href: "/dashboard/donor/donation",
       icon: Heart,
     },
     {
@@ -50,7 +50,7 @@ export default function Sidebar() {
     },
     {
       title: "Kelola Satwa",
-      href: "/dashboard/shelter/satwa",
+      href: "/dashboard/shelter/animals",
       icon: PawPrint,
     },
     {

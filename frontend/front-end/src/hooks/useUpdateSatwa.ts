@@ -21,7 +21,7 @@ export function useUpdateSatwa() {
 
     notify.success("Satwa berhasil diperbarui.");
 
-     router.push("/dashboard/shelter/satwa");
+     router.push("/dashboard/shelter/animals");
     },
 
     onError(error) {

@@ -38,11 +38,11 @@ export default function LoginForm() {
           break;
 
         case "SHELTER":
-          router.push("/shelter/dashboard");
+          router.push("/dashboard/shelter");
           break;
 
         case "SUPER_ADMIN":
-          router.push("/admin/dashboard");
+          router.push("/dashboard/admin");
           break;
       }
     },

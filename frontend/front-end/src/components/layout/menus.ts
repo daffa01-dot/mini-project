@@ -33,7 +33,7 @@ export const donorMenus: SidebarMenu[] = [
   {
     key: "donations",
     label: "Riwayat Donasi",
-    path: "/dashboard/donor/donations",
+    path: "/dashboard/donor/donation",
     icon: Heart,
   },
   {

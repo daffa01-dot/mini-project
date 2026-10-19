@@ -20,7 +20,7 @@ export function useCreateSatwa() {
 
    notify.success("Satwa berhasil ditambahkan.");
 
-     router.push("/dashboard/shelter/satwa");
+     router.push("/dashboard/shelter/animals");
     },
 
     onError(error) {

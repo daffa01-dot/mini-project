@@ -13,7 +13,7 @@ export default function QuickAction() {
       </Link>
 
       <Link
-        href="/dashboard/donor/donations"
+        href="/dashboard/donor/donation"
         className="rounded-2xl border border-green-600 p-6 text-center text-lg font-semibold text-green-600 transition hover:bg-green-50"
       >
         Lihat Riwayat Donasi

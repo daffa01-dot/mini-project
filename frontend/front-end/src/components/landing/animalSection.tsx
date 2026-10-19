@@ -72,7 +72,7 @@ export default function AnimalSection() {
             {animals.map((animal) => (
               <Link
                 key={animal.id}
-                href={`/dashboard/donor/shelters/${animal.shelterId}/satwa/${animal.id}`}
+                href={`/animals/${animal.id}`}
                 className="group overflow-hidden rounded-3xl bg-white shadow-md transition duration-300 hover:-translate-y-2 hover:shadow-2xl"
               >
                 <Image

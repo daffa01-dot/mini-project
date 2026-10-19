@@ -51,7 +51,7 @@ export default function ShelterCard({
         </p>
 
         <Link
-          href={`/dashboard/donor/shelters/${shelter.id}`}
+          href={`/shelters/${shelter.id}`}
           className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-green-600 py-3 font-medium text-white transition hover:bg-green-700"
         >
           Lihat Detail

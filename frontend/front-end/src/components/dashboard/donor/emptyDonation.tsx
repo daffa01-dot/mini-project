@@ -21,7 +21,7 @@ export default function EmptyDonation() {
       </p>
 
       <Link
-        href="/dashboard/donor/donations/checkout"
+        href="/dashboard/donor/donation/create"
         className="mt-8 inline-block rounded-xl bg-green-600 px-6 py-3 font-semibold text-white transition hover:bg-green-700"
       >
         Donasi Sekarang
